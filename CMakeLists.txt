@@ -108,6 +108,16 @@ if(CRYPTO3_HASH_BLAKE2B)
          ${${CURRENT_PROJECT_NAME}_BLAKE2B_HEADERS})
 endif()
 
+if(CRYPTO3_HASH_CUBEHASH)
+    list(APPEND ${CURRENT_PROJECT_NAME}_CUBEHASH_HEADERS
+         include/nil/crypto3/hash/cubehash.hpp
+         include/nil/crypto3/hash/detail/cubehash_policy.hpp)
+
+    add_definitions(-D${CMAKE_UPPER_WORKSPACE_NAME}_HAS_CUBEHASH)
+    list(APPEND ${CURRENT_PROJECT_NAME}_PUBLIC_HEADERS
+         ${${CURRENT_PROJECT_NAME}_CUBEHASH_HEADERS})
+endif()
+
 if(CRYPTO3_HASH_KECCAK)
     list(APPEND ${CURRENT_PROJECT_NAME}_KECCAK_HEADERS
          include/nil/crypto3/hash/keccak.hpp)
