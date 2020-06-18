@@ -119,9 +119,9 @@ if(CRYPTO3_HASH_GHASH)
          include/nil/crypto3/hash/detail/ghash/ghash_policy.hpp
          include/nil/crypto3/hash/ghash5.hpp)
 
-    add_definitions(-D${CMAKE_UPPER_WORKSPACE_NAME}_HAS_RIPEMD)
+    add_definitions(-D${CMAKE_UPPER_WORKSPACE_NAME}_HAS_GHASH)
     list(APPEND ${CURRENT_PROJECT_NAME}_PUBLIC_HEADERS
-         ${${CURRENT_PROJECT_NAME}_RIPEMD_HEADERS})
+         ${${CURRENT_PROJECT_NAME}_GHASH_HEADERS})
 endif()
 
 if(CRYPTO3_HASH_KECCAK)
