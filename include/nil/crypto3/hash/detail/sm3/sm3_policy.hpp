@@ -32,6 +32,14 @@ namespace nil {
 
                     typedef typename stream_endian::little_octet_big_bit digest_endian;
 
+                    constexpr static const std::size_t pkcs_id_size = 18;
+                    constexpr static const std::size_t pkcs_id_bits = pkcs_id_size * CHAR_BIT;
+                    typedef std::array<std::uint8_t, pkcs_id_size> pkcs_id_type;
+
+                    constexpr static const pkcs_id_type pkcs_id = {0x30, 0x30, 0x30, 0x0C, 0x06, 0x08,
+                                                                   0x2A, 0x81, 0x1C, 0xCF, 0x55, 0x01,
+                                                                   0x83, 0x11, 0x05, 0x00, 0x04, 0x20};
+
                     struct iv_generator {
                         state_type const &operator()() const {
                             constexpr static const state_type H0 = {{0x7380166fUL, 0x4914b2b9UL, 0x172442d7UL,
@@ -41,6 +49,9 @@ namespace nil {
                         }
                     };
                 };
+
+                constexpr typename sm3_policy::pkcs_id_type const
+                    sm3_policy::pkcs_id;
             }    // namespace detail
         }        // namespace hash
     }            // namespace crypto3
