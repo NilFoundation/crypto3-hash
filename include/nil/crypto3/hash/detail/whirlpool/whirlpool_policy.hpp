@@ -47,6 +47,8 @@ namespace nil {
                         }
                     };
 
+                    constexpr static const std::uint8_t ieee1363_hash_id = 0x37;
+
                     constexpr static const std::size_t rounds = 10;
 
                     constexpr static const std::size_t round_constants_size = rounds;
