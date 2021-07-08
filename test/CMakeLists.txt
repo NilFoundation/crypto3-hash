@@ -49,6 +49,7 @@ endmacro()
 
 set(TESTS_NAMES
     "blake2b"
+    "cubehash"
     "keccak"
     "md4"
     "md5"
