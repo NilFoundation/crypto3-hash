@@ -37,8 +37,8 @@
 #include <boost/concept/assert.hpp>
 
 #include <nil/crypto3/multiprecision/cpp_int.hpp>
-#include <nil/marshalling/endianness.hpp>
-#include <nil/marshalling/algorithms/pack.hpp>
+#include <nil/crypto3/marshalling/endianness.hpp>
+#include <nil/crypto3/marshalling/algorithms/pack.hpp>
 #include <nil/crypto3/marshalling/multiprecision/types/integral.hpp>
 
 #include <nil/crypto3/algebra/type_traits.hpp>
