@@ -82,10 +82,15 @@ namespace nil {
                     pack_to<endian_type, value_bits, word_bits>(cache.begin(), cache.end(), block.begin());
                     // Process the block
                     acc(block, ::nil::crypto3::accumulators::bits = block_seen);
+// Uncommenting this cout fixes the problem.
+std::cout << " ++++++++++++++++++++++++++++++++++++++++++++++++++++ Convert the input into words " << cache.size() << " block_bits = " << block_bits << "\n";
                 }
 
             public:
                 inline void update_one(value_type value) {
+//std::cout << "inline void update_one(value_type value) { cache_seen = " << cache_seen << " block_values = " << block_values << "\n";
+//std::cout << "block_bits = " << block_bits << " value_bits =  " << value_bits << std::endl;
+
                     cache[cache_seen] = value;
                     ++cache_seen;
                     if (cache_seen == block_values) {
@@ -97,6 +102,7 @@ namespace nil {
 
                 template<typename InputIterator>
                 inline void update_n(InputIterator p, size_t n) {
+// std::cout << "                inline void update_n(InputIterator p, size_t n) { n = " << n << "\n";
                     for (; n; --n) {
                         update_one(*p++);
                     }
@@ -129,6 +135,7 @@ namespace nil {
 
                 template<typename ContainerT>
                 inline void operator()(const ContainerT &c) {
+// std::cout << "inline void operator()(const ContainerT &c) {\n";
                     update_n(c.data(), c.size());
                 }
 

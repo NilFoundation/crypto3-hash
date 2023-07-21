@@ -60,6 +60,10 @@ namespace nil {
                 typedef typename policy_type::block_type block_type;
 
                 static void process_block(state_type &state, const block_type &block) {
+                    // Uncommenting cout-s in this function fixes the bug.
+                    std::cout << "Keccak processing block of size " << block_words << " block_bits = " << block_bits
+                        << " state.size() == " << state.size() << " sizeof(state[0]) = " << sizeof(state[0]) << std::endl;
+
                     for (std::size_t i = 0; i != block_words; ++i)
                         state[i] ^= block[i];
 
@@ -74,6 +78,7 @@ namespace nil {
 
                     for (std::size_t i = 0; i != state_words; ++i)
                         boost::endian::endian_reverse_inplace(state[i]);
+                    // std::cout << "DONE!!! Keccak processing block of size " << block_words << std::endl;
                 }
             };
 

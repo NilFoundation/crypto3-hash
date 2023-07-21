@@ -48,6 +48,7 @@ namespace nil {
                 typedef std::array<word_type, BlockWords> block_type;
 
                 static void inject(word_type w, std::size_t word_seen, block_type &b, std::size_t &block_seen) {
+// std::cout << "word_injector 51\n";
                     // Insert word_seen-bit part of word into the block b according to endianness
 
                     // Check whether we fall out of the block
@@ -81,6 +82,8 @@ namespace nil {
                 typedef std::array<word_type, BlockWords> block_type;
 
                 static void inject(word_type w, std::size_t word_seen, block_type &b, std::size_t &block_seen) {
+ std::cout << "word_injector 85\n";
+
                     // Insert word_seen-bit part of word into the block b according to endianness
 
                     // Check whether we fall out of the block
@@ -157,7 +160,11 @@ namespace nil {
 
                 typedef std::array<word_type, BlockWords> block_type;
 
+// word_seen is the number of bits to append to block b
+// block_seen is the number of bits in the current block that are already used and must not be touched.
                 static void inject(word_type w, std::size_t word_seen, block_type &b, std::size_t &block_seen) {
+std::cout << "word_injector 163 word_seen = " << word_seen << " block_seen = " << block_seen << " BlockBits = " << BlockBits << "\n";
+
                     // Insert word_seen-bit part of word into the block b according to endianness
 
                     // Check whether we fall out of the block
@@ -220,6 +227,9 @@ namespace nil {
                         }
                         block_seen += word_seen;
                     }
+                    else {
+                        throw "We fall out of block.";
+                    }
                 }
             };
 
@@ -233,6 +243,8 @@ namespace nil {
                 typedef std::array<word_type, BlockWords> block_type;
 
                 static void inject(word_type w, std::size_t word_seen, block_type &b, std::size_t &block_seen) {
+// This one is never called.
+std::cout << "word_injector 239\n";
                     // Insert word_seen-bit part of word into the block b according to endianness
 
                     // Check whether we fall out of the block
@@ -264,8 +276,13 @@ namespace nil {
 
                 typedef std::array<word_type, BlockWords> block_type;
 
+// b_src_seen is the number of bits from b_src to write to block,
+// b_dst_seen is the number of bits used in the b_dst,
+// block_shift is the number of bits from b_src to skip, they have been written to the previous block.
                 static void inject(const block_type &b_src, std::size_t b_src_seen, block_type &b_dst,
                                    std::size_t &b_dst_seen, std::size_t block_shift = 0) {
+//std::cout << "word_injector 273 word_bits = " << word_bits << " WordBits = " << WordBits << " BlockWords = " << BlockWords << " BlockBits = " << BlockBits << "sizeof(b_src[0]) = " << sizeof(b_src[0]) << "sizeof(b_dst[0]) = " << sizeof(b_dst[0])<< "\n";
+
                     // Insert word_seen-bit part of word into the block b according to endianness
 
                     // Check whether we fall out of the block
@@ -274,6 +291,7 @@ namespace nil {
                         std::size_t first_word_ind = block_shift / word_bits;
                         std::size_t word_shift = block_shift % word_bits;
 
+                        // Number of bits from the first word that will get written.
                         std::size_t first_word_seen =
                             (word_bits - word_shift) > b_src_seen ? b_src_seen : (word_bits - word_shift);
 
@@ -294,6 +312,7 @@ namespace nil {
 
                 static void inject(word_type w, std::size_t word_seen, block_type &b, std::size_t &block_seen,
                                    std::size_t word_shift = 0) {
+// std::cout << "word_injector 302\n";
 
                     word_type word_shifted = w;
 

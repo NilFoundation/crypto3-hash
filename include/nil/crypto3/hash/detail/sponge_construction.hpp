@@ -95,9 +95,21 @@ namespace nil {
                         process_block(b);
 
                     std::size_t copy_seen = block_seen;
+
+//std::cout << "Before padding the block is ";
+//for (const auto& v: b)
+//    std::cout << v << " ";
+//std::cout << "\n\n"; 
+//std::cout << "block_seen = " << block_seen << " so we need to pad the last " << block_bits - block_seen << " bits\n";
+
                     // Pad last message block
                     padding_functor padding;
+std::cout << "Padding class is " << typeid(padding).name() << " block_seen = " << block_seen << "\n";
                     padding(b, block_seen);
+std::cout << "Padded block is ";
+for (const auto& v: b)
+    std::cout << v << " ";
+std::cout << "\n\n"; 
                     process_block(b);
 
                     // Process additional block if not all bits were padded

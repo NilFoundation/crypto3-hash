@@ -55,6 +55,7 @@ namespace nil {
                         UINT64_C(0x8000000000008080), UINT64_C(0x0000000080000001), UINT64_C(0x8000000080008008)};
 
                     static inline void permute(state_type &A) {
+std::cout << "keccak_x86_64_impl.hpp called\n";
                         std::array<word_type, 10> C;
                         std::array<word_type, 25> B;
                         __asm__(

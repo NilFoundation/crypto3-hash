@@ -167,7 +167,32 @@ namespace nil {
 
             return HashImpl(rng, std::move(out), HashAccumulator());
         }
-
+template <class T>
+std::string
+type_name()
+{
+    typedef typename std::remove_reference<T>::type TR;
+    std::unique_ptr<char, void(*)(void*)> own
+           (
+#ifndef _MSC_VER
+                abi::__cxa_demangle(typeid(TR).name(), nullptr,
+                                           nullptr, nullptr),
+#else
+                nullptr,
+#endif
+                std::free
+           );
+    std::string r = own != nullptr ? own.get() : typeid(TR).name();
+    if (std::is_const<TR>::value)
+        r += " const";
+    if (std::is_volatile<TR>::value)
+        r += " volatile";
+    if (std::is_lvalue_reference<T>::value)
+        r += "&";
+    else if (std::is_rvalue_reference<T>::value)
+        r += "&&";
+    return r;
+}
         /*!
          * @brief
          *
@@ -186,11 +211,20 @@ namespace nil {
         typename std::enable_if<boost::accumulators::detail::is_accumulator_set<HashAccumulator>::value,
                                 HashAccumulator>::type &
             hash(const SinglePassRange &rng, HashAccumulator &sh) {
+//std::cout << "hash.hpp:    hash(const SinglePassRange &rng, HashAccumulator &sh) {" << rng.size() << "\n";
+//std::cout << type_name<decltype(rng)>() << std::endl;
+
+//std::cout << "rng is = ";
+//for (auto& x: rng)
+//    std::cout << x << " ";
+//std::cout << std::endl;
+
             typedef hashes::detail::ref_hash_impl<HashAccumulator> StreamHashImpl;
             typedef hashes::detail::range_hash_impl<StreamHashImpl> HashImpl;
 
             return HashImpl(rng, std::forward<HashAccumulator>(sh));
         }
+
 
         /*!
          * @brief
@@ -208,7 +242,8 @@ namespace nil {
         template<typename Hash, typename SinglePassRange, typename HashAccumulator = accumulator_set<Hash>>
         hashes::detail::range_hash_impl<hashes::detail::value_hash_impl<HashAccumulator>>
             hash(const SinglePassRange &r) {
-
+// std::cout << "hash.hpp    ----------------------        hash(const SinglePassRange &r) { " << r.size() << "\n";
+// std::cout << type_name<decltype(r)>() << std::endl;
             typedef hashes::detail::value_hash_impl<HashAccumulator> StreamHashImpl;
             typedef hashes::detail::range_hash_impl<StreamHashImpl> HashImpl;
 

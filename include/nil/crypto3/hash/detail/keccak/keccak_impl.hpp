@@ -56,6 +56,7 @@ namespace nil {
                         UINT64_C(0x8000000000008080), UINT64_C(0x0000000080000001), UINT64_C(0x8000000080008008)};
 
                     static inline void permute(state_type &A) {
+std::cout << "keccak keccak_impl.hpp \n";
                         for (typename round_constants_type::value_type c : round_constants) {
                             const word_type C0 = A[0] ^ A[5] ^ A[10] ^ A[15] ^ A[20];
                             const word_type C1 = A[1] ^ A[6] ^ A[11] ^ A[16] ^ A[21];

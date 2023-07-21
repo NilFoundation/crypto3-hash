@@ -177,6 +177,7 @@ namespace nil {
                 inline static typename std::enable_if<
                     can_memcpy<Endianness, InputValueBits, OutputValueBits, InputType, OutputType>::value>::type
                     pack_n(InputType const *in, std::size_t n, OutputType *out) {
+std::cout << "-=-=-=-=-=-=-= 180\n";
                     std::memcpy(out, in, n * sizeof(InputType));
                 }
 
@@ -196,6 +197,7 @@ namespace nil {
                 inline static typename std::enable_if<
                     can_memcpy<Endianness, InputValueBits, OutputValueBits, InputType, OutputType>::value>::type
                     pack_n(InputType *in, std::size_t n, OutputType *out) {
+std::cout << "-=-=-=-=-=-=-= 200\n";
                     std::memcpy(out, in, n * sizeof(InputType));
                 }
 
@@ -239,6 +241,7 @@ namespace nil {
                 template<typename InputIterator, typename OutputIterator>
                 inline static void pack(InputIterator first, InputIterator last, std::random_access_iterator_tag,
                                         OutputIterator out, std::random_access_iterator_tag) {
+std::cout << "-=-=-=-=-=-=-= 244\n";
                     pack_n(first, std::distance(first, last), out);
                 }
 
@@ -264,6 +267,7 @@ namespace nil {
                  */
                 template<typename InputIterator, typename InCatT, typename OutputIterator, typename OutCatT>
                 inline static void pack(InputIterator first, InputIterator last, InCatT, OutputIterator out, OutCatT) {
+std::cout << "-=-=-=-=-=-=-= 270\n";
                     std::copy(first, last, out);
                 }
 
@@ -283,7 +287,7 @@ namespace nil {
                  */
                 template<typename InputIterator, typename OutputIterator>
                 inline static void pack(InputIterator first, InputIterator last, OutputIterator out) {
-
+std::cout << "-=-=-=-=-=-=-= 290\n";
                     typedef typename std::iterator_traits<InputIterator>::iterator_category in_cat;
                     typedef typename std::iterator_traits<OutputIterator>::iterator_category out_cat;
 
@@ -320,7 +324,7 @@ namespace nil {
 
                 template<typename InputIterator, typename OutputIterator>
                 inline static void pack_n(InputIterator in, std::size_t in_n, OutputIterator out) {
-
+std::cout << "-=-=-=-=-=-=-= 327\n";
                     std::transform(in, in + in_n, out, [](InputType const &elem) {
                         return units_reverser::reverse(bits_reverser::reverse(elem));
                     });
@@ -329,6 +333,7 @@ namespace nil {
                 template<typename InputIterator, typename OutputIterator>
                 inline static void pack(InputIterator first, InputIterator last, OutputIterator out) {
 
+std::cout << "-=-=-=-=-=-=-= 336\n";
                     std::transform(first, last, out, [](InputType const &elem) {
                         return units_reverser::reverse(bits_reverser::reverse(elem));
                     });
@@ -364,10 +369,11 @@ namespace nil {
 
                 template<typename InputIterator, typename OutputIterator>
                 inline static void pack_n(InputIterator in, std::size_t in_n, OutputIterator out) {
+std::cout << "-=-=-=-=-=-=-= 372\n";
                     std::size_t out_n = in_n / (OutputValueBits / InputValueBits);
 
                     while (out_n--) {
-                        OutputType value = OutputType();
+                        OutputType value = 0;
                         imploder::implode(in, value);
                         *out++ = value;
                     }
@@ -375,8 +381,10 @@ namespace nil {
 
                 template<typename InputIterator, typename OutputIterator>
                 inline static void pack(InputIterator first, InputIterator last, OutputIterator out) {
+std::cout << "-=-=-=-=-=-=-= 384 InputValueBits = " << InputValueBits << " OutputValueBits =" << OutputValueBits << "\n";
+std::cout << "distance is " << std::distance(first, last) << std::endl;
                     while (first != last) {
-                        OutputType value = OutputType();
+                        OutputType value = 0;
                         imploder::implode(first, value);
                         *out++ = value;
                     }
@@ -412,6 +420,7 @@ namespace nil {
 
                 template<typename InputIterator, typename OutputIterator>
                 inline static void pack_n(InputIterator in, std::size_t in_n, OutputIterator out) {
+std::cout << "-=-=-=-=-=-=-= 422\n";
                     while (in_n--) {
                         InputType const value = *in++;
                         exploder::explode(value, out);
@@ -420,6 +429,7 @@ namespace nil {
 
                 template<typename InputIterator, typename OutputIterator>
                 inline static void pack(InputIterator first, InputIterator last, OutputIterator out) {
+std::cout << "-=-=-=-=-=-=-= 431\n";
                     while (first != last) {
                         InputType const value = *first++;
                         exploder::explode(value, out);
@@ -445,6 +455,7 @@ namespace nil {
 
                 template<typename InputIterator, typename OutputIterator>
                 inline static void pack_n(InputIterator in, std::size_t n, OutputIterator out) {
+std::cout << "-=-=-=-=-=-=-= 457\n";
                     typedef real_packer<InputEndianness, OutputEndianness, InputValueBits, OutputValueBits, InputType,
                                         OutputType>
                         packer_type;
@@ -454,6 +465,7 @@ namespace nil {
 
                 template<typename InputIterator, typename OutputIterator>
                 inline static void pack(InputIterator first, InputIterator last, OutputIterator out) {
+std::cout << "-=-=-=-=-=-=-= 467\n";
                     typedef real_packer<InputEndianness, OutputEndianness, InputValueBits, OutputValueBits, InputType,
                                         OutputType>
                         packer_type;

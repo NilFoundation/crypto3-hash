@@ -65,25 +65,39 @@ namespace nil {
                         return is_last;
                     }
 
+                    // The way we use this is we pass the value of 'block_seen' as the total number of 
+                    // bits in all the blocks up to the given block. We must used block_seen % block_bits
+                    // to determine how many bits are free in a given block.
+                    // And this variable is an in-out parameter...
                     void operator()(block_type &block, std::size_t &block_seen) {
                         using namespace nil::crypto3::detail;
+                        std::size_t block_seen_current_block = block_seen % block_bits;
+                        if (block_seen != 0 && block_seen_current_block == 0)
+                            block_seen_current_block = block_bits;
 
-                        if ((block_bits - block_seen) > 1) {
+                        if (block_bits - block_seen_current_block > 1) {
                             // try to handle bit NIST tests
                             /*if (block_seen % octet_bits) {
                                 pack<stream_endian::big_octet_big_bit, stream_endian::big_octet_little_bit,
                                 word_bits, word_bits>(block.begin(), block.end(), block.begin());
                             }*/
                             // pad 1
-                            injector_type::inject(unbounded_shr(high_bits<word_bits>(~word_type(), 1), 7), 1, block,
-                                                  block_seen);
+                            const auto pow_2_constant = unbounded_shr(high_bits<word_bits>(~word_type(), 1), 7);
+std::cout << "word_bits = " << word_bits << " high_bits<word_bits>(~word_type(), 1) = " << high_bits<word_bits>(~word_type(), 1)
+         << "pow_2_constant = " << pow_2_constant << " block_seen = " << block_seen << " block_bits = " << block_bits << std::endl;
+
+                            std::size_t block_seen_current_block_2 = block_seen_current_block;
+                            injector_type::inject(pow_2_constant, 1, block, block_seen_current_block_2);
                             // pad 0*
                             block_type zeros;
                             std::fill(zeros.begin(), zeros.end(), 0);
-                            injector_type::inject(zeros, block_bits - 1 - block_seen, block, block_seen);
+                            injector_type::inject(
+                                zeros, block_bits - 1 - block_seen_current_block_2, 
+                                block, block_seen_current_block_2);
+
                             // pad 1
-                            injector_type::inject(unbounded_shr(high_bits<word_bits>(~word_type(), 1), 7), 1, block,
-                                                  block_seen);
+                            injector_type::inject(pow_2_constant, 1, block, block_seen_current_block_2);
+                            block_seen += block_seen_current_block_2 - block_seen_current_block;
                         }
 
                         else {
@@ -93,15 +107,22 @@ namespace nil {
                     }
 
                     void process_last(block_type &block, std::size_t &block_seen) {
+std::cout << "process_last called\n";
                         using namespace nil::crypto3::detail;
 
+                        std::size_t block_seen_current_block = block_seen % block_bits;
+                        if (block_seen != 0 && block_seen_current_block == 0)
+                            block_seen_current_block = block_bits;
+
+                        std::size_t block_seen_current_block_2 = block_seen_current_block;
                         // pad 0*
                         block_type zeros;
                         std::fill(zeros.begin(), zeros.end(), 0);
-                        injector_type::inject(zeros, block_bits - 1, block, block_seen);
+                        injector_type::inject(zeros, block_bits - 1, block, block_seen_current_block_2);
                         // pad 1
                         injector_type::inject(unbounded_shr(high_bits<word_bits>(~word_type(), 1), 7), 1, block,
-                                              block_seen);
+                                              block_seen_current_block_2);
+                        block_seen += block_seen_current_block_2 - block_seen_current_block;
                     }
                 };
             }    // namespace detail

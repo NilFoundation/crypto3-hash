@@ -230,6 +230,7 @@ namespace nil {
                         UINT64_C(0x8000000000008080), UINT64_C(0x0000000080000001), UINT64_C(0x8000000080008008)};
 
                     static inline void permute(state_type &A) {
+//std::cout << "keccak keccak_armv8_impl.hpp\n";
                         __asm__ volatile(
                             "ldr x0, [%[A], #0]\n"
 //                            "ldr x1, [%[A], #8]\n"

@@ -100,8 +100,9 @@ namespace nil {
                     }
 
                     inline result_type result(boost::accumulators::dont_care) const {
+std::cout << "hash/accumulators/hash.hpp : 103 total_seen = " << total_seen << "\n";
                         construction_type res = construction;
-                        return res.digest(cache, total_seen);
+                        return res.digest(cache, total_seen % block_bits);
                     }
 
                 protected:
@@ -116,14 +117,19 @@ namespace nil {
                     }
 
                     inline void process(const block_type &value, std::size_t value_seen) {
+// Uncommenting this cout leads to fix.
+// std::cout << "hash/accumulators/hash.hpp : process total_seen = " << total_seen << "\n";
                         using namespace ::nil::crypto3::detail;
 
                         if (filled) {
-                            construction.process_block(cache, total_seen);
+                            construction.process_block(cache, block_bits);
                             filled = false;
                         }
 
                         std::size_t cached_bits = total_seen % block_bits;
+// Uncommenting this cout leads to fix.
+//std::cout << "hash/accumulators/hash.hpp process " << "value_seen = " << value_seen << 
+//    "total_seen = " << total_seen << " block_words = " << block_words << " block_bits = " << block_bits << "cached_bits = " << cached_bits << "\n";
 
                         if (cached_bits != 0) {
                             // If there are already any bits in the cache
@@ -141,7 +147,7 @@ namespace nil {
 
                                 if (value_seen > new_bits_to_append) {
 
-                                    construction.process_block(cache, total_seen);
+                                    construction.process_block(cache, block_bits);
                                     filled = false;
 
                                     // If there are some remaining bits in the incoming value - put them into the cache,
@@ -151,11 +157,9 @@ namespace nil {
 
                                     injector_type::inject(
                                         value, value_seen - new_bits_to_append, cache, cached_bits, new_bits_to_append);
-
                                     total_seen += value_seen - new_bits_to_append;
                                 }
                             }
-
                         } else {
 
                             total_seen += value_seen;
@@ -165,11 +169,16 @@ namespace nil {
                                 // The incoming value is a full block
                                 filled = true;
 
-                                std::move(value.begin(), value.end(), cache.begin());
-
+                                std::copy(value.begin(), value.end(), cache.begin());
                             } else {
+                                if (word_bits == 40) {
+//std::cout << "Moving value of size " << value_seen << " into a block of size " << block_bits << " word_bits = " << word_bits << std::endl;
+                                }
+
                                 // The incoming value is not a full block
-                                std::move(value.begin(),
+                                if (value_seen > block_bits)
+                                    std::cout << "value_seen > block_bits\n";
+                                std::copy(value.begin(),
                                           value.begin() + value_seen / word_bits + (value_seen % word_bits ? 1 : 0),
                                           cache.begin());
                             }
@@ -180,7 +189,7 @@ namespace nil {
                         using namespace ::nil::crypto3::detail;
 
                         if (filled) {
-                            construction.process_block(cache, total_seen);
+                            construction.process_block(cache, block_bits);
                             filled = false;
                         }
 
@@ -201,7 +210,7 @@ namespace nil {
 
                                 if (value_seen > new_bits_to_append) {
 
-                                    construction.process_block(cache, total_seen);
+                                    construction.process_block(cache, block_bits);
                                     filled = false;
 
                                     // If there are some remaining bits in the incoming value - put them into the cache,

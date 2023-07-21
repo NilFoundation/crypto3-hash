@@ -80,7 +80,7 @@ namespace nil {
                                                                                  {1, 2, 3, 4, 0, 5, 6, 7}}};
 
                     static inline void permute(state_type &A) {
-
+std::cout << "Keccak keccak_avx512_impl.hpp\n";
                         register __m512i A0 asm("zmm0") = _mm512_set_epi64(A[4], A[3], A[2], A[1], A[0], 0, 0, 0);
                         register __m512i A1 asm("zmm1") = _mm512_set_epi64(A[9], A[8], A[7], A[6], A[5], 0, 0, 0);
                         register __m512i A2 asm("zmm2") = _mm512_set_epi64(A[14], A[13], A[12], A[11], A[10], 0, 0, 0);

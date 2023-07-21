@@ -122,6 +122,7 @@ namespace nil {
                          {word_bits - 44, word_bits - 43, word_bits - 21, word_bits - 14}}};
 
                     static inline void permute(state_type &A) {
+                std::cout << "keccak avx2 on a state of size " << A.size() << "sizeof(A[0]) == " << sizeof(A[0]) << std::endl;
 
                         register __m256i A0 asm("ymm0") = _mm256_set_epi64x(A[0], A[0], A[0], A[0]);
                         register __m256i A1 asm("ymm1") = _mm256_set_epi64x(A[4], A[3], A[2], A[1]);

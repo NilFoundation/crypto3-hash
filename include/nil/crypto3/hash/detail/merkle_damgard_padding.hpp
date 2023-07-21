@@ -60,6 +60,8 @@ namespace nil {
 
                 public:
                     void operator()(block_type &block, std::size_t &block_seen) {
+std::cout << "merkle_damgard_padding.hpp\n";
+
                         using namespace nil::crypto3::detail;
                         // Remove garbage
                         block_type block_of_zeros;

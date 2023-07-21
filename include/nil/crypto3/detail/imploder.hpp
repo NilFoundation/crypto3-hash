@@ -139,6 +139,8 @@ namespace nil {
 
                 template<typename InIter, typename OutputValue>
                 inline static void implode(InIter &in, OutputValue &x) {
+// Next line is printed a lot when uncommented.
+// std::cout << "inline static void implode(InIter &in, OutputValue &x) {\n";
                     step_type::step(*in++, x);
                     next_type::implode(in, x);
                 }
@@ -149,6 +151,7 @@ namespace nil {
             struct imploder<InputEndian<UnitBits>, OutputEndian<UnitBits>, InputBits, OutputBits, OutputBits> {
                 template<typename InIter, typename OutputValue>
                 inline static void implode(InIter &, OutputValue &) {
+                    // We have filled one full Output Value, stop here.
                 }
             };
 
