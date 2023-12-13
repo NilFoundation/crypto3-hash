@@ -70,28 +70,17 @@ namespace nil {
                 typedef typename boost::uint_t<value_bits>::least value_type;
                 BOOST_STATIC_ASSERT(word_bits % value_bits == 0);
                 constexpr static const std::size_t block_values = block_bits / value_bits;
-                typedef std::array<value_type, block_values> cache_type;
 
             protected:
                 BOOST_STATIC_ASSERT(block_bits % value_bits == 0);
 
-                inline void process_block(std::size_t block_seen = block_bits) {
-                    // Convert the input into words
-                    block_type block;
-                    nil::crypto3::detail::pack_to<endian_type, value_bits, word_bits>(cache.begin(), cache.end(), block.begin());
-                    // Process the block
-                    acc(block, ::nil::crypto3::accumulators::bits = block_seen);
+                inline void process_value(value_type value) {
+                    acc(value);
                 }
 
             public:
                 inline void update_one(value_type value) {
-                    cache[cache_seen] = value;
-                    ++cache_seen;
-                    if (cache_seen == block_values) {
-                        // Process the completed block
-                        process_block();
-                        cache_seen = 0;
-                    }
+                    process_value(value);
                 }
 
                 template<typename InputIterator>
@@ -132,21 +121,13 @@ namespace nil {
                 }
 
             public:
-                block_stream_processor(accumulator_type &acc) : acc(acc), cache(), cache_seen(0) {
+                block_stream_processor(accumulator_type &acc) : acc(acc) {
                 }
 
-                virtual ~block_stream_processor() {
-                    if (cache_seen > 0) {
-                        process_block(cache_seen * value_bits);
-                        cache_seen = 0;
-                    }
-                }
+                virtual ~block_stream_processor() {}
 
             private:
                 accumulator_type &acc;
-
-                cache_type cache;
-                std::size_t cache_seen;
             };
         }    // namespace hashes
     }        // namespace crypto3
