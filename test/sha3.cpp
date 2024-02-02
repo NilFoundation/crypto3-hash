@@ -834,4 +834,108 @@ BOOST_AUTO_TEST_CASE(sha3_512_preprocessor3) {
         std::to_string(s).data());
 }
 
+BOOST_AUTO_TEST_CASE(sha3_512_preprocessor4) {
+    // Test per-bit update
+    accumulator_set<hashes::sha3<512>> acc;
+
+    acc(UINT64_C(0x0000000000000000), accumulators::bits = 1);
+    acc(UINT64_C(0x8000000000000000), accumulators::bits = 1);
+    acc(UINT64_C(0x8000000000000000), accumulators::bits = 2);
+    acc(UINT64_C(0x1000000000000000), accumulators::bits = 4);
+    acc(UINT64_C(0x6200000000000000), accumulators::bits = 8);
+    acc(UINT64_C(0x6300000000000000), accumulators::bits = 8);
+
+    hashes::sha3<512>::digest_type s = extract::hash<hashes::sha3<512>>(acc);
+
+#ifdef CRYPTO3_HASH_SHOW_PROGRESS
+    std::printf("%s\n", std::to_string(s).data());
+#endif
+
+    BOOST_CHECK_EQUAL(
+        "b751850b1a57168a5693cd924b6b096e08f621827444f70d884f5d0240d2712e"
+        "10e116e9192af3c91a7ec57647e3934057340b4cf408d5a56592f8274eec53f0",
+        std::to_string(s).data());
+}
+
+BOOST_AUTO_TEST_CASE(sha3_512_preprocessor5) {
+    // Test finalizing block bit
+    accumulator_set<hashes::sha3<512>> acc;
+
+    acc(UINT64_C(0xFFFFFFFFFFFFFFFF), accumulators::bits = 64);
+    acc(UINT64_C(0xFFFFFFFFFFFFFFFF), accumulators::bits = 64);
+    acc(UINT64_C(0xFFFFFFFFFFFFFFFF), accumulators::bits = 64);
+    acc(UINT64_C(0xFFFFFFFFFFFFFFFF), accumulators::bits = 64);
+    acc(UINT64_C(0xFFFFFFFFFFFFFFFF), accumulators::bits = 64);
+    acc(UINT64_C(0xFFFFFFFFFFFFFFFF), accumulators::bits = 64);
+    acc(UINT64_C(0xFFFFFFFFFFFFFFFF), accumulators::bits = 64);
+    acc(UINT64_C(0xFFFFFFFFFFFFFFFF), accumulators::bits = 64);
+    acc(UINT64_C(0xFFFFFFFFFFFFFFFF), accumulators::bits = 63);
+    acc(UINT64_C(0xFFFFFFFFFFFFFFFF), accumulators::bits = 1);
+
+    hashes::sha3<512>::digest_type s = extract::hash<hashes::sha3<512>>(acc);
+
+#ifdef CRYPTO3_HASH_SHOW_PROGRESS
+    std::printf("%s\n", std::to_string(s).data());
+#endif
+
+    BOOST_CHECK_EQUAL(
+        "b760c5c77c9c4410aad827fbbd927287580c9a811e99306e7ef0ba29251d61a1"
+        "5dc0bf347438dcb2045e3bb26dda49383be783dc7fcf0af4ecbad0b783619bfd",
+        std::to_string(s).data());
+}
+
+BOOST_AUTO_TEST_CASE(sha3_512_preprocessor6) {
+    // Test block completions and start of the next one adding value_type
+    accumulator_set<hashes::sha3<512>> acc;
+
+    acc(UINT64_C(0xFFFFFFFFFFFFFFFF), accumulators::bits = 64);
+    acc(UINT64_C(0xFFFFFFFFFFFFFFFF), accumulators::bits = 64);
+    acc(UINT64_C(0xFFFFFFFFFFFFFFFF), accumulators::bits = 64);
+    acc(UINT64_C(0xFFFFFFFFFFFFFFFF), accumulators::bits = 64);
+    acc(UINT64_C(0xFFFFFFFFFFFFFFFF), accumulators::bits = 64);
+    acc(UINT64_C(0xFFFFFFFFFFFFFFFF), accumulators::bits = 64);
+    acc(UINT64_C(0xFFFFFFFFFFFFFFFF), accumulators::bits = 64);
+    acc(UINT64_C(0xFFFFFFFFFFFFFFFF), accumulators::bits = 64);
+    acc(UINT64_C(0xFFFFFFFFFFFFFFFF), accumulators::bits = 64);
+    // Here block should be dumped
+    acc(UINT64_C(0x0000000000000001), accumulators::bits = 64);
+
+    hashes::sha3<512>::digest_type s = extract::hash<hashes::sha3<512>>(acc);
+
+#ifdef CRYPTO3_HASH_SHOW_PROGRESS
+    std::printf("%s\n", std::to_string(s).data());
+#endif
+
+    BOOST_CHECK_EQUAL(
+        "eaf02d10eb24f5a88f9c94da7a865ef3970624efaf50f8efeb9e9ec2b7ddc23b"
+        "3eaa86721aaf77a75137d650c91c14e948cff2bcd1f08464d2995ab9fb6877cd",
+        std::to_string(s).data());
+}
+
+BOOST_AUTO_TEST_CASE(sha3_512_preprocessor7) {
+    // Test add block_type with not alligned cache
+    accumulator_set<hashes::sha3<512>> acc;
+
+    acc(UINT64_C(0xFFFFFFFFFFFFFFFF), accumulators::bits = 31);
+
+    hashes::sha3<512>::construction::type::block_type m2 = {{
+        UINT64_C(0xFFFFFFFFFFFFFFFF), UINT64_C(0xFFFFFFFFFFFFFFFF), UINT64_C(0xFFFFFFFFFFFFFFFF),
+        UINT64_C(0xFFFFFFFFFFFFFFFF), UINT64_C(0xFFFFFFFFFFFFFFFF), UINT64_C(0xFFFFFFFFFFFFFFFF),
+        UINT64_C(0xFFFFFFFFFFFFFFFF), UINT64_C(0xFFFFFFFFFFFFFFFF), UINT64_C(0xFFFFFFFFFFFFFFFF)
+    }};
+
+    acc(UINT64_C(0xFFFFFFFFFFFFFFFF), accumulators::bits = 33);
+
+    hashes::sha3<512>::digest_type s = extract::hash<hashes::sha3<512>>(acc);
+
+#ifdef CRYPTO3_HASH_SHOW_PROGRESS
+    std::printf("%s\n", std::to_string(s).data());
+#endif
+
+    BOOST_CHECK_EQUAL(
+        "4aead76e5ba6658020a36a5cc9b9020cbbb330f95ecd2d545fbb064ca5ae5578"
+        "f7f54e869963818ed4a0cd22dee3e862e4c9e8fda99febd04216fe608d4d0310",
+        std::to_string(s).data());
+}
+
 BOOST_AUTO_TEST_SUITE_END()

@@ -89,20 +89,17 @@ namespace nil {
 
             public:
                 template<typename Integer = std::size_t>
-                inline merkle_damgard_construction &process_block(const block_type &block, Integer seen = Integer()) {
+                inline merkle_damgard_construction &process_block(const block_type &block) {
                     compressor_functor::process_block(state_, block);
                     return *this;
                 }
 
                 inline digest_type digest(const block_type &block = block_type(),
-                                          length_type total_seen = length_type()) {
+                                          const length_type total_seen = length_type()) {
                     using namespace nil::crypto3::detail;
 
                     block_type b = block;
                     std::size_t block_seen = total_seen % block_bits;
-                    // Process block if block is full
-                    if (total_seen && !block_seen)
-                        process_block(b);
 
                     // Pad last message block
                     padding_functor padding;

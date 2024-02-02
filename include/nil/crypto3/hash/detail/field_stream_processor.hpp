@@ -1,6 +1,4 @@
 //---------------------------------------------------------------------------//
-// Copyright (c) 2018-2019 Mikhail Komarov <nemo@nil.foundation>
-// Copyright (c) 2020 Nikita Kaskov <nbering@nil.foundation>
 //
 // MIT License
 //
@@ -23,14 +21,13 @@
 // SOFTWARE.
 //---------------------------------------------------------------------------//
 
-#ifndef CRYPTO3_HASH_BLOCK_STREAM_PROCESSOR_HPP
-#define CRYPTO3_HASH_BLOCK_STREAM_PROCESSOR_HPP
+#ifndef CRYPTO3_HASH_FIELD_STREAM_PROCESSOR_HPP
+#define CRYPTO3_HASH_FIELD_STREAM_PROCESSOR_HPP
 
 #include <array>
 #include <iterator>
 
 #include <nil/crypto3/detail/pack.hpp>
-
 #include <nil/crypto3/hash/accumulators/bits_count.hpp>
 #include <nil/crypto3/hash/accumulators/parameters/bits.hpp>
 
@@ -43,16 +40,14 @@ namespace nil {
         namespace hashes {
 
             /*!
-             * @brief This will do the usual Merkle-Damgård-style strengthening,
-             * padding with a 1 bit, then 0 bits as needed, then, if requested,
-             * the length.
+             * @brief This will consume field elements, won't add any padding.
              *
              * @tparam Hash
              * @tparam StateAccumulator
              * @tparam Params
              */
             template<typename Construction, typename StateAccumulator, typename Params>
-            class block_stream_processor {
+            class field_stream_processor {
             protected:
                 typedef typename Construction::type construction_type;
                 typedef StateAccumulator accumulator_type;
@@ -76,10 +71,9 @@ namespace nil {
                 BOOST_STATIC_ASSERT(block_bits % value_bits == 0);
 
                 inline void process_block(std::size_t block_seen = block_bits) {
-                    using namespace nil::crypto3::detail;
                     // Convert the input into words
                     block_type block;
-                    pack_to<endian_type, value_bits, word_bits>(cache.begin(), cache.end(), block.begin());
+                    nil::crypto3::detail::pack_to<endian_type, value_bits, word_bits>(cache.begin(), cache.end(), block.begin());
                     // Process the block
                     acc(block, ::nil::crypto3::accumulators::bits = block_seen);
                 }
@@ -150,7 +144,7 @@ namespace nil {
                 std::size_t cache_seen;
             };
         }    // namespace hashes
-    }        // namespace crypto3
+    }    // namespace crypto3
 }    // namespace nil
 
 #endif

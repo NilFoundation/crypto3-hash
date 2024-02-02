@@ -40,7 +40,7 @@ namespace nil {
     namespace crypto3 {
         namespace hashes {
             template<std::size_t DigestBits = 512>
-            class sha3_compressor {
+            class sha3_permutator {
             protected:
                 typedef detail::sha3_functions<DigestBits> policy_type;
 
@@ -56,10 +56,7 @@ namespace nil {
                 constexpr static const std::size_t block_words = policy_type::block_words;
                 typedef typename policy_type::block_type block_type;
 
-                static void process_block(state_type &state, const block_type &block) {
-                    for (std::size_t i = 0; i != block_words; ++i)
-                        state[i] ^= block[i];
-
+                static void permute(state_type &state, const block_type &block) {
                     for (std::size_t i = 0; i != state_words; ++i)
                         boost::endian::endian_reverse_inplace(state[i]);
 
@@ -105,8 +102,7 @@ namespace nil {
                     };
 
                     typedef sponge_construction<params_type, typename policy_type::iv_generator,
-                                                sha3_compressor<DigestBits>, detail::sha3_padding<policy_type>,
-                                                detail::sha3_finalizer<policy_type>>
+                                                sha3_permutator<DigestBits>, detail::sha3_padding<policy_type>>
                         type;
                 };
 
