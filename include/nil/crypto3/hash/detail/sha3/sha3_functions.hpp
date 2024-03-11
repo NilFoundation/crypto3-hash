@@ -36,31 +36,26 @@ namespace nil {
             namespace detail {
                 template<std::size_t DigestBits>
                 struct sha3_functions : public sha3_policy<DigestBits> {
-                    typedef sha3_policy<DigestBits> policy_type;
+                    using policy_type = sha3_policy<DigestBits>;
 
                     constexpr static const std::size_t word_bits = policy_type::word_bits;
-                    typedef typename policy_type::word_type word_type;
+                    using word_type = typename policy_type::word_type;
 
-                    typedef typename policy_type::state_type state_type;
+                    using state_type = typename policy_type::state_type;
 
                     constexpr static const std::size_t round_constants_size = policy_type::rounds;
-                    typedef typename std::array<word_type, round_constants_size> round_constants_type;
+                    using round_constants_type = typename std::array<word_type, round_constants_size>;
 
                     constexpr static const std::size_t pkcs_id_size = policy_type::pkcs_id_size;
                     constexpr static const std::size_t pkcs_id_bits = policy_type::pkcs_id_bits;
-                    typedef typename policy_type::pkcs_id_type pkcs_id_type;
+                    using pkcs_id_type = typename policy_type::pkcs_id_type;
 
                     constexpr static const pkcs_id_type pkcs_id = policy_type::pkcs_id;
 
                     static inline void permute(state_type &A) {
-                        keccak_1600_impl<policy_type>::permute(state);
+                        keccak_1600_impl<policy_type>::permute(A);
                     }
                 };
-
-                // Do we need it?
-                template<std::size_t DigestBits>
-                constexpr typename sha3_functions<DigestBits>::round_constants_type const
-                    sha3_functions<DigestBits>::round_constants;
             }    // namespace detail
         }        // namespace hashes
     }            // namespace crypto3

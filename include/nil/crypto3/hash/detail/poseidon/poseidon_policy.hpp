@@ -28,21 +28,21 @@ namespace nil {
                  */
                 template<typename FieldType, std::size_t Security, std::size_t Rate, std::size_t Capacity, std::size_t SBoxPower, std::size_t FullRounds, std::size_t PartRounds, bool MinaVersion>
                 struct base_poseidon_policy {
-                    typedef FieldType field_type;
-                    typedef typename field_type::value_type element_type;
+                    using field_type = FieldType;
+                    using element_type = typename field_type::value_type;
 
                     constexpr static const std::size_t word_bits = field_type::modulus_bits;
-                    typedef element_type word_type;
+                    using word_type = element_type;
 
                     constexpr static const std::size_t digest_bits = field_type::modulus_bits;
-                    typedef element_type digest_type;
+                    using digest_type = element_type;
 
                     // TODO: Not sure what is best to use here.
-                    typedef typename stream_endian::big_octet_big_bit digest_endian;
+                    using digest_endian = typename stream_endian::big_octet_big_bit;
 
                     constexpr static const std::size_t state_bits = (Rate + Capacity) * field_type::modulus_bits;
                     constexpr static const std::size_t state_words = (Rate + Capacity);
-                    typedef std::array<element_type, Rate + Capacity> state_type;
+                    using state_type = std::array<element_type, Rate + Capacity>;
 
                     constexpr static const std::size_t block_bits = Rate * field_type::modulus_bits;
 
@@ -50,7 +50,7 @@ namespace nil {
                     constexpr static const std::size_t length_bits = word_bits;
 
                     constexpr static const std::size_t block_words = Rate;
-                    typedef std::array<element_type, Rate> block_type;
+                    using block_type = std::array<element_type, Rate>;
 
                     constexpr static const std::size_t full_rounds = FullRounds;
                     constexpr static const std::size_t half_full_rounds = FullRounds >> 1;
@@ -61,7 +61,7 @@ namespace nil {
                     constexpr static const std::size_t capacity = Capacity;
                     constexpr static const std::size_t sbox_power = SBoxPower;
 
-                    constexpr static const bool mina_version = MinaVersion; 
+                    constexpr static const bool mina_version = MinaVersion;
 
                     struct iv_generator {
                         // TODO: maybe it would be done in constexpr way
@@ -80,7 +80,7 @@ namespace nil {
                  * @brief Policy class for the original implementation.
                  * @tparam FieldType Type of the field.
                  * @tparam Security The bit strength of hash, one of [80, 128, 256].
-                 * @tparam Rate Rate of input block for Poseidon permutation in field elements. Values of 2 or 4 are used with Merkle Trees. 
+                 * @tparam Rate Rate of input block for Poseidon permutation in field elements. Values of 2 or 4 are used with Merkle Trees.
                  * @tparam Capacity Capacity or inner part of Poseidon permutation in field elements.
                  */
                 template<typename FieldType, std::size_t Security, std::size_t Rate, typename Enable = void>

@@ -46,7 +46,7 @@ namespace nil {
                     constexpr static const std::size_t block_words = policy_type::block_words;
                     typedef typename policy_type::block_type block_type;
 
-                    typedef ::nil::crypto3::detail::injector<endian_type, word_bits, block_words, block_bits>
+                    typedef ::nil::crypto3::detail::injector<stream_endian::big_octet_big_bit, endian_type, word_bits, block_words, block_bits>
                         injector_type;
 
                 public:

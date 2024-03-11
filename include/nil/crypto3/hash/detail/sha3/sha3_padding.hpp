@@ -36,9 +36,9 @@ namespace nil {
         namespace hashes {
             namespace detail {
                 // pad10*1 scheme
-                template<typename Hash>
-                class sha3_padding : public sponge_padding_base<sha3_padding, Hash> {{
-                    typedef Hash policy_type;
+                template<typename Policy>
+                class sha3_padding : public sponge_padding_base<sha3_padding<Policy>, Policy> {
+                    typedef Policy policy_type;
 
                     constexpr static const std::size_t word_bits = policy_type::word_bits;
                     typedef typename policy_type::word_type word_type;
@@ -47,54 +47,61 @@ namespace nil {
                     constexpr static const std::size_t state_words = policy_type::state_words;
                     typedef typename policy_type::state_type state_type;
 
-                    constexpr static const std::size_t block_bits = policy_type::block_bits;
-                    constexpr static const std::size_t block_words = policy_type::block_words;
-                    typedef typename policy_type::block_type block_type;
+                    constexpr static const std::size_t bitrate_bits = policy_type::bitrate_bits;
+                    constexpr static const std::size_t bitrate_words = policy_type::bitrate_words;
+                    typedef typename policy_type::bitrate_type bitrate_type;
 
                     constexpr static const std::size_t digest_bits = policy_type::digest_bits;
                     typedef typename policy_type::digest_type digest_type;
 
-                    typedef ::nil::crypto3::detail::injector<stream_endian::big_octet_little_bit, word_bits,
-                                                             block_words, block_bits>
+                    typedef ::nil::crypto3::detail::injector<stream_endian::big_octet_big_bit, stream_endian::little_octet_little_bit, word_bits,
+                                                             bitrate_words>
                         injector_type;
 
                 public:
-                    static std::vector<block_type> get_padded_blocks(const block_type& block, std::size_t block_seen) {
+                    static std::vector<bitrate_type> get_padded_bitrates(const bitrate_type& bitrate, std::size_t bitrate_seen) {
                         using namespace nil::crypto3::detail;
 
-                        std::vector<block_type> padded_blocks;
-                        block_type new_block = block; // Start with the current block
+                        std::vector<bitrate_type> padded_bitrates;
+                        bitrate_type new_bitrate = bitrate; // Start with the current bitrate
 
-                        if ((block_bits - block_seen) > 3) {
-                            // Typical case when there is enough place for padding
-                            // pad 011
-                            injector_type::inject(unbounded_shr(high_bits<word_bits>(~word_type(), 2), 5), 3, new_block, block_seen);
-                            // pad 0*
-                            std::fill(new_block.begin() + (block_seen / (sizeof(word_type) * 8)), new_block.end(), 0);
-                            // pad 1
-                            injector_type::inject(unbounded_shr(high_bits<word_bits>(~word_type(), 1), 7), 1, new_block, block_seen);
+                        if ((bitrate_bits - bitrate_seen) >= 3) {
+                            // add 0110 (first 01 is domain separatoin byte)
+                            injector_type::inject(unbounded_shr(high_bits<word_bits>(~word_type(), 2), 1), 3, new_bitrate,
+                                                  bitrate_seen);
+                            // fill with 0...0
+                            bitrate_type zeros;
+                            std::fill(zeros.begin(), zeros.end(), 0);
+                            injector_type::inject(zeros, bitrate_bits - 1 - bitrate_seen, new_bitrate, bitrate_seen);
 
-                            padded_blocks.push_back(new_block);
+                            // add the last 1
+                            injector_type::inject(high_bits<word_bits>(~word_type(), 1), 1, new_bitrate,
+                                                  bitrate_seen);
+
+                            padded_bitrates.push_back(new_bitrate);
                         } else {
+                            throw;
                             // If there's not enough space
-                            std::size_t ind = block_bits - block_seen - 1;
-                            new_block[block_words - 1] &= ~high_bits<word_bits>(~word_type(), ind + 1);
-                            new_block[block_words - 1] |= high_bits<word_bits>(~word_type(), ind);
+                            std::size_t ind = bitrate_bits - bitrate_seen - 1;
+                            new_bitrate[bitrate_words - 1] &= ~high_bits<word_bits>(~word_type(), ind + 1);
+                            new_bitrate[bitrate_words - 1] |= high_bits<word_bits>(~word_type(), ind);
 
-                            padded_blocks.push_back(new_block);
+                            padded_bitrates.push_back(new_bitrate);
 
-                            // Create an additional block for the remaining padding
-                            block_type extra_block;
-                            std::fill(extra_block.begin(), extra_block.end(), 0);
+                            // Create an additional bitrate for the remaining padding
+                            bitrate_type extra_bitrate;
+                            std::fill(extra_bitrate.begin(), extra_bitrate.end(), 0);
 
-                            // Padding logic for the extra block
-                            // pad 1 (since the block is initially all zeros, just set the first bit to 1)
-                            injector_type::inject(high_bits<word_bits>(~word_type(), 1), 1, extra_block, 0);
+                            // Padding logic for the extra bitrate
+                            // pad 1 (since the bitrate is initially all zeros, just set the first bit to 1)
+                            std::size_t injected_bits_n = 0;
+                            injector_type::inject(high_bits<word_bits>(~word_type(), 1), 1, extra_bitrate, injected_bits_n);
+                            BOOST_ASSERT(injected_bits_n == 1); // OR == word_bits?
 
-                            padded_blocks.push_back(extra_block);
+                            padded_bitrates.push_back(extra_bitrate);
                         }
 
-                        return padded_blocks;
+                        return padded_bitrates;
                     }
                 };
             }    // namespace detail

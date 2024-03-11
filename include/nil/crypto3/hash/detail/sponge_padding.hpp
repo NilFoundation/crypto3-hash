@@ -43,9 +43,10 @@ namespace nil {
                 template<typename Derived, typename Hash>
                 class sponge_padding_base {
                 public:
-                    static std::vector<BlockType> get_padded_blocks(const BlockType& block, const std::size_t block_seen) {
+                    using block_type = typename Hash::block_type;
+                    static std::vector<block_type> get_padded_blocks(const block_type& block, const std::size_t block_seen) {
                         static_assert(std::is_same<decltype(Derived::get_padded_blocks(block, block_seen)),
-                                                std::vector<BlockType>>::value,
+                                                std::vector<block_type>>::value,
                                     "Derived class must implement static get_padded_blocks method");
 
                         return Derived::get_padded_blocks(block, block_seen);
