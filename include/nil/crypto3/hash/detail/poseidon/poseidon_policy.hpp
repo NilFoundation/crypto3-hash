@@ -28,21 +28,21 @@ namespace nil {
                  */
                 template<typename FieldType, std::size_t Security, std::size_t Rate, std::size_t Capacity, std::size_t SBoxPower, std::size_t FullRounds, std::size_t PartRounds, bool MinaVersion>
                 struct base_poseidon_policy {
-                    using field_type = FieldType;
-                    using element_type = typename field_type::value_type;
+                    typedef FieldType field_type;
+                    typedef typename field_type::value_type element_type;
 
                     constexpr static const std::size_t word_bits = field_type::modulus_bits;
-                    using word_type = element_type;
+                    typedef element_type word_type;
 
                     constexpr static const std::size_t digest_bits = field_type::modulus_bits;
-                    using digest_type = element_type;
+                    typedef element_type digest_type;
 
                     // TODO: Not sure what is best to use here.
-                    using digest_endian = typename stream_endian::big_octet_big_bit;
+                    typedef typename stream_endian::big_octet_big_bit digest_endian;
 
                     constexpr static const std::size_t state_bits = (Rate + Capacity) * field_type::modulus_bits;
                     constexpr static const std::size_t state_words = (Rate + Capacity);
-                    using state_type = std::array<element_type, Rate + Capacity>;
+                    typedef std::array<element_type, Rate + Capacity> state_type;
 
                     constexpr static const std::size_t block_bits = Rate * field_type::modulus_bits;
 
@@ -50,7 +50,7 @@ namespace nil {
                     constexpr static const std::size_t length_bits = word_bits;
 
                     constexpr static const std::size_t block_words = Rate;
-                    using block_type = std::array<element_type, Rate>;
+                    typedef std::array<element_type, Rate> block_type;
 
                     constexpr static const std::size_t full_rounds = FullRounds;
                     constexpr static const std::size_t half_full_rounds = FullRounds >> 1;

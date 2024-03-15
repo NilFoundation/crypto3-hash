@@ -105,7 +105,7 @@ namespace nil {
             template<typename PolicyType>
             struct poseidon;
 
-            template<typename Params, typename Policy, typename IV, typename Permutation, typename Padding>
+            template<typename Params, typename Policy, typename VectorInitializer, typename Absorber, typename Permutator, typename Padder>
             class sponge_construction;
 
             template<typename Params, typename Hash, typename Group>

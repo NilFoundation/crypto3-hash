@@ -27,40 +27,16 @@
 #ifndef CRYPTO3_HASH_SHA3_HPP
 #define CRYPTO3_HASH_SHA3_HPP
 
-#include <nil/crypto3/hash/detail/sponge_construction.hpp>
 #include <nil/crypto3/hash/detail/block_stream_processor.hpp>
+#include <nil/crypto3/hash/detail/sponge_construction.hpp>
 #include <nil/crypto3/hash/detail/sha3/sha3_functions.hpp>
 #include <nil/crypto3/hash/detail/sha3/sha3_policy.hpp>
-#include <nil/crypto3/hash/detail/sha3/sha3_finalizer.hpp>
 #include <nil/crypto3/hash/detail/sha3/sha3_padding.hpp>
 
-#include <boost/endian/conversion.hpp>
 
 namespace nil {
     namespace crypto3 {
         namespace hashes {
-            template<std::size_t DigestBits = 512>
-            class sha3_permutator {
-            protected:
-                typedef detail::sha3_functions<DigestBits> policy_type;
-
-            public:
-                constexpr static const std::size_t word_bits = policy_type::word_bits;
-                typedef typename policy_type::word_type word_type;
-
-                constexpr static const std::size_t state_bits = policy_type::state_bits;
-                constexpr static const std::size_t state_words = policy_type::state_words;
-                typedef typename policy_type::state_type state_type;
-
-                constexpr static const std::size_t block_bits = policy_type::block_bits;
-                constexpr static const std::size_t block_words = policy_type::block_words;
-                typedef typename policy_type::block_type block_type;
-
-                static void permute(state_type &state) {
-                    policy_type::permute(state);
-                }
-            };
-
             /*!
              * @brief
              * @tparam DigestBits
@@ -97,7 +73,7 @@ namespace nil {
                     };
 
                     typedef sponge_construction<params_type, policy_type, typename policy_type::iv_generator,
-                                                sha3_permutator<DigestBits>, detail::sha3_padding<policy_type>>
+                                                detail::sha3_functions<DigestBits>, detail::sha3_functions<DigestBits>, detail::sha3_padder<policy_type>>
                         type;
                 };
 

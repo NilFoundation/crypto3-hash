@@ -41,6 +41,9 @@ namespace nil {
                     constexpr static const std::size_t word_bits = policy_type::word_bits;
                     using word_type = typename policy_type::word_type;
 
+                    constexpr static const std::size_t block_words = policy_type::block_words;
+                    using block_type = typename policy_type::block_type;
+
                     using state_type = typename policy_type::state_type;
 
                     constexpr static const std::size_t round_constants_size = policy_type::rounds;
@@ -52,8 +55,15 @@ namespace nil {
 
                     constexpr static const pkcs_id_type pkcs_id = policy_type::pkcs_id;
 
-                    static inline void permute(state_type &A) {
+                    static void permute(state_type &A) {
                         keccak_1600_impl<policy_type>::permute(A);
+                    }
+
+                    static void absorb(const block_type& block, state_type& state) {
+                        for (std::size_t i = 0; i < block.size(); ++i) {
+                            // XOR
+                            state[i] ^= block[i];
+                        }
                     }
                 };
             }    // namespace detail

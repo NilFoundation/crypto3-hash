@@ -40,17 +40,18 @@ namespace nil {
              * @tparam DigestEndian
              * @tparam DigestBits
              *
-             * The Sponge construction builds a bitrate hashes from a
-             * one-way compressor.  As this version operated on the bitrate
+             * The Sponge construction builds a block hashes from a
+             * one-way compressor.  As this version operated on the block
              * level, it doesn't contain any padding or other strengthening.
              * For a Wide Pipe construction, use a digest that will
              * truncate the internal state.
              */
             template<typename Params,
                      typename Policy,
-                     typename IV,  // Seems redundant, no one using it
-                     typename Permutation,
-                     typename Padding>
+                     typename IVGenerator, // Class produsing IV
+                     typename Absorber,          // Must provide void absorb(block, state)
+                     typename Permutator,        // Must provide void permute(state)
+                     typename Padder>            // Must provide std::vector<block_type> get_padded_blocks(block)
             class sponge_construction {
             public:
                 using endian_type = typename Params::digest_endian;
@@ -63,47 +64,35 @@ namespace nil {
                 constexpr static const std::size_t state_words = Policy::state_words;
                 using state_type = typename Policy::state_type;
 
-                // R (bitrate)
-                constexpr static const std::size_t bitrate_bits = Policy::bitrate_bits;
-                constexpr static const std::size_t bitrate_words = Policy::bitrate_words;
-                using bitrate_type = typename Policy::bitrate_type;
+                // R (bitrate). aka block to fit other code
+                constexpr static const std::size_t block_bits = Policy::block_bits;
+                constexpr static const std::size_t block_words = Policy::block_words;
+                using block_type = typename Policy::block_type;
 
-                constexpr static const std::size_t step_bits = Policy::bitrate_bits;
-                constexpr static const std::size_t step_words = Policy::bitrate_words;
-                using step_unit_type = typename Policy::bitrate_type;
+                constexpr static const std::size_t step_bits = Policy::block_bits;
+                constexpr static const std::size_t step_words = Policy::block_words;
+                using step_unit_type = typename Policy::block_type;
 
                 constexpr static const std::size_t digest_bits = Params::digest_bits;
                 constexpr static const std::size_t digest_bytes = digest_bits / octet_bits;
                 constexpr static const std::size_t digest_words = digest_bits / word_bits + (digest_bits % word_bits == 0 ? 0 : 1);
                 using digest_type = static_digest<digest_bits>;
 
-                inline digest_type digest(const bitrate_type &bitrate = bitrate_type(),
-                                          std::size_t bitrate_bits_filled = std::size_t()) {
-                    // TODO: After this call construction will become unusable in case if digest lenght is not divisible by bitrate length (aka bitrate)
-                    //       Thus, throwing an error if user tries to use construction afterwards, makes sense.
+                inline digest_type digest(const block_type &block = block_type(),
+                                          std::size_t block_bits_filled = std::size_t()) {
                     using namespace nil::crypto3::detail;
 
-                    if (bitrate_bits_filled != 0) { // FIXME: if 0, still needs padding
-                        bitrate_bits_filled == bitrate_bits ? absorb(bitrate) : absorb_with_padding(bitrate, bitrate_bits_filled);
-                    }
-
-                    std::array<word_type, digest_words> squeezed_bitrates_holder;
-                    constexpr static std::size_t bitrates_needed_for_digest =  digest_bits / bitrate_bits + (digest_bits % bitrate_bits == 0 ? 0 : 1);
-                    std::cout << "bitrates_needed_for_digest: " << bitrates_needed_for_digest << std::endl;
-                    std::cout << "digest_bits: " << digest_bits << std::endl;
-                    std::cout << "bitrate_bits: " << bitrate_bits << std::endl;
-                    for (std::size_t i = 0; i < bitrates_needed_for_digest; ++i) {
+                    std::array<word_type, digest_words> squeezed_blocks_holder;
+                    constexpr static std::size_t blocks_needed_for_digest =  digest_bits / block_bits + (digest_bits % block_bits == 0 ? 0 : 1);
+                    for (std::size_t i = 0; i < blocks_needed_for_digest; ++i) {
                         std::cout << "squeezing " << i << " time" << std::endl;
-                        bitrate_type squeezed = squeeze();
-                        // TODO: check if this will break in case >1. sinse there could be not enough squeezed_bitrates_holder
-                        pack_from<endian_type, word_bits, word_bits>(squeezed.begin(), squeezed.end(), squeezed_bitrates_holder.begin() + i * bitrate_words);
+                        block_type squeezed = squeeze();
+                        // TODO: check if this will break in case >1. sinse there could be not enough squeezed_blocks_holder
+                        pack_from<endian_type, word_bits, word_bits>(squeezed.begin(), squeezed.end(), squeezed_blocks_holder.begin() + i * block_words);
                     }
-
-                    std::cout << "squeezed_bitrates_holder size: " << squeezed_bitrates_holder.size() << std::endl;
-                    print_hex_byteblob(std::cout, squeezed_bitrates_holder.begin(), squeezed_bitrates_holder.end());
 
                     std::array<octet_type, digest_bits / octet_bits> d_full;
-                    pack_from<endian_type, word_bits, octet_bits>(squeezed_bitrates_holder.begin(), squeezed_bitrates_holder.end(), d_full.begin());
+                    pack_from<endian_type, word_bits, octet_bits>(squeezed_blocks_holder.begin(), squeezed_blocks_holder.end(), d_full.begin());
 
                     std::cout << __LINE__ << std::endl;
                     digest_type d; // std::array<octet_type, DigestBits / octet_bits>
@@ -113,28 +102,28 @@ namespace nil {
                     return d;
                 }
 
-                inline sponge_construction &absorb(const bitrate_type &bitrate) {
-                    for (std::size_t i = 0; i < bitrate_words; ++i) {
-                        state_[i] ^= bitrate[i];
-                    }
-                    Permutation::permute(state_);
+                inline sponge_construction &absorb(const block_type &block) {
+                    Absorber::absorb(block, state_);
+                    Permutator::permute(state_);
                     return *this;
                 }
 
-                inline sponge_construction &absorb_with_padding(const bitrate_type &bitrate = bitrate_type(),
-                                          const std::size_t last_bitrate_bits_filled = 0) {
-                    auto padded_bitrates = Padding::get_padded_bitrates(bitrate, last_bitrate_bits_filled);
-                    for (auto& bitrate : padded_bitrates) {
-                        absorb(std::move(bitrate));
+                inline sponge_construction &absorb_with_padding(const block_type &block = block_type(),
+                                          const std::size_t last_block_bits_filled = 0) {
+                    auto padded_blocks = Padder::get_padded_blocks(block, last_block_bits_filled);
+                    std::cout << "absorbing padded blocks:" << std::endl;
+                    for (auto& block : padded_blocks) {
+                        print_hex_byteblob(std::cout, block.begin(), block.end());
+                        absorb(std::move(block));
                     }
                     return *this;
                 }
 
-                inline bitrate_type squeeze() {
-                    bitrate_type bitrate;
-                    std::copy(state_.begin(), state_.begin() + bitrate_words, bitrate.begin());
-                    Permutation::permute(state_);
-                    return bitrate;
+                inline block_type squeeze() {
+                    block_type block;
+                    std::copy(state_.begin(), state_.begin() + block_words, block.begin());
+                    Permutator::permute(state_);
+                    return block;
                 }
 
                 sponge_construction() {
@@ -146,8 +135,7 @@ namespace nil {
                 }
 
                 void reset() {
-                    IV iv;
-                    reset(iv());
+                    reset(IVGenerator::generate());
                 }
 
                 state_type const &state() const {

@@ -132,10 +132,9 @@ namespace nil {
                     constexpr static const std::size_t state_words = state_bits / word_bits;
                     typedef typename std::array<word_type, state_words> state_type;
 
-                    constexpr static const std::size_t bitrate_bits = state_bits - 2 * digest_bits;
-                    constexpr static const std::size_t bitrate_words = bitrate_bits / word_bits;
-                    typedef std::array<word_type, bitrate_words> bitrate_type;
-                    using block_type = bitrate_type;
+                    constexpr static const std::size_t block_bits = state_bits - 2 * digest_bits;
+                    constexpr static const std::size_t block_words = block_bits / word_bits;
+                    typedef std::array<word_type, block_words> block_type;
 
                     constexpr static const std::size_t pkcs_id_size = policy_type::pkcs_id_size;
                     constexpr static const std::size_t pkcs_id_bits = policy_type::pkcs_id_bits;
@@ -145,19 +144,13 @@ namespace nil {
 
                     constexpr static const std::size_t length_bits = 0;
 
-                    // FIPS 202 (https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.202.pdf) specifies bit numbering
-                    // as big_octet_little_bit. We use optimization, where state is little_octet_big_bit, since it
-                    // reduces the amount of rotations required. As shown in B.2 example, if block consists of
-                    // [ 1 2 3 4 5 6 7 8 | 9 10 11 12 13 14 15 16 ] bits, they are used as
-                    // [ 8 7 6 5 4 3 2 1 | 16 15 14 13 12 11 10 9 ] inside a permutation. Optimization idea is
-                    // to store them as [ 9 10 11 12 13 14 15 16 | 1 2 3 4 5 6 7 8 ] and to read from right to left.
-                    // This affects padding, as we need to add not 0110*1, but reversed 10*110 (01 is domain separation byte).
                     typedef typename stream_endian::little_octet_big_bit digest_endian;
 
                     constexpr static const std::size_t rounds = 24;
 
                     struct iv_generator {
-                        state_type const &operator()() const {
+                        static state_type generate() {
+                            // 1600 zeros. Mb use keccak one
                             static state_type const H0 = {UINT64_C(0x0000000000000000), UINT64_C(0x0000000000000000),
                                                           UINT64_C(0x0000000000000000), UINT64_C(0x0000000000000000),
                                                           UINT64_C(0x0000000000000000), UINT64_C(0x0000000000000000),

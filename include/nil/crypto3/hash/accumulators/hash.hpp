@@ -29,19 +29,19 @@
 
 #include <concepts>
 
-#include <boost/parameter/value_type.hpp>
 
 #include <boost/accumulators/framework/accumulator_base.hpp>
 #include <boost/accumulators/framework/extractor.hpp>
 #include <boost/accumulators/framework/depends_on.hpp>
 #include <boost/accumulators/framework/parameters/sample.hpp>
-
+#include <boost/accumulators/statistics/count.hpp>
 #include <boost/container/static_vector.hpp>
+#include <boost/parameter/value_type.hpp>
 
+#include <nil/crypto3/detail/block_cache.hpp>
+#include <nil/crypto3/detail/endian_shift.hpp>
 #include <nil/crypto3/detail/make_array.hpp>
 #include <nil/crypto3/detail/static_digest.hpp>
-#include <nil/crypto3/detail/endian_shift.hpp>
-#include <nil/crypto3/detail/inject.hpp>
 
 #include <nil/crypto3/hash/accumulators/bits_count.hpp>
 
@@ -50,7 +50,6 @@
 
 #include <nil/crypto3/hash/type_traits.hpp>
 
-#include <boost/accumulators/statistics/count.hpp>
 
 namespace nil {
     namespace crypto3 {
@@ -83,9 +82,9 @@ void print_hex_byteblob(std::ostream &os, TIter iter_begin, TIter iter_end, bool
                     constexpr static const std::size_t word_bits = construction_type::word_bits;
                     typedef typename construction_type::word_type word_type;
 
-                    constexpr static const std::size_t step_bits = construction_type::step_bits;
-                    constexpr static const std::size_t step_words = construction_type::step_words;
-                    typedef typename construction_type::step_unit_type step_unit_type;
+                    constexpr static const std::size_t block_bits = construction_type::block_bits;
+                    constexpr static const std::size_t block_words = construction_type::block_words;
+                    typedef typename construction_type::block_type block_type;
 
                     constexpr static const std::size_t length_bits = params_type::length_bits;
                     // FIXME: do something more intelligent than capping at 64
@@ -111,10 +110,15 @@ void print_hex_byteblob(std::ostream &os, TIter iter_begin, TIter iter_end, bool
 
                     inline result_type result(boost::accumulators::dont_care) const {
                         construction_type res = construction; // Make a copy, so we can append more to existing state afterwards
-                        step_unit_type block = cache_.get_block();
+                        const block_type block = cache_.get_block();
+                        block_type b_packed;
+                        nil::crypto3::detail::pack_to<endian_type, word_bits, word_bits>(block.begin(), block.end(), b_packed.begin());
+                        std::cout << "cache inside result: " << std::endl;
+                        print_hex_byteblob(std::cout, b_packed.begin(), b_packed.end());
                         if constexpr (nil::crypto3::hashes::is_sponge<hash_type>::value) {
                             // Sponge hash behavior
-                            return res.digest(block, cache_.bits_used());
+                            res.absorb_with_padding(b_packed, cache_.bits_used());
+                            return res.digest();
                         } else {
                             // Non-sponge hash behavior
                             return res.digest(block, total_seen_);
@@ -122,156 +126,73 @@ void print_hex_byteblob(std::ostream &os, TIter iter_begin, TIter iter_end, bool
                     }
 
                 protected:
-                    inline void resolve_type(const step_unit_type &value, std::size_t bits) {
-                        process(value, bits == 0 ? step_bits : bits);
+                    inline void resolve_type(const block_type &value, std::size_t bits) {
+                        process(value, bits == 0 ? block_bits : bits);
                     }
 
                     inline void resolve_type(const word_type &value, std::size_t bits) {
                         process(value, bits == 0 ? word_bits : bits);
                     }
 
-                    inline void process(const step_unit_type &value, std::size_t value_seen) {
-                        // TODO: make process(...) templated and move custom logic to cache class
-                        using namespace ::nil::crypto3::detail;
+                    inline void process(const block_type &value, std::size_t value_seen) {
+                        std::size_t processed_bits = 0;
 
-                        if (!cache_.is_empty()) {
+                        while (processed_bits < value_seen) {
                             std::size_t unused_bits_in_cache = cache_.capacity() - cache_.bits_used();
-                            std::size_t new_bits_to_append =
-                                (unused_bits_in_cache > value_seen) ? value_seen : unused_bits_in_cache;
+                            std::size_t remaining_bits = value_seen - processed_bits;
+                            std::size_t bits_to_append = std::min(unused_bits_in_cache, remaining_bits);
 
-                            cache_.append(value, new_bits_to_append);
+                            cache_.append(value, bits_to_append, processed_bits);
+                            processed_bits += bits_to_append;
 
                             if (cache_.is_full()) {
-                                dump_cache_to_construction();
-
-                                if (value_seen > new_bits_to_append) {
-                                    // If there are some remaining bits in the incoming value - put them into the cache,
-                                    // which is now empty
-                                    cache_.append(value, value_seen - new_bits_to_append, new_bits_to_append);
-                                }
-                            }
-                        } else {
-                            cache_.append(value, value_seen);
-                            if (cache_.is_full()) {
-                                dump_cache_to_construction();
+                                flush_cache_to_construction();
                             }
                         }
+
                         total_seen_ += value_seen;
                     }
 
                     inline void process(const word_type &value, std::size_t value_seen) {
-                        using namespace ::nil::crypto3::detail;
+                        std::size_t processed_bits = 0;
 
-                        if (cache_.is_word_alligned()) {
+                        // Directly append if cache is word aligned and has enough capacity
+                        if (cache_.is_word_alligned() && cache_.capacity() - cache_.bits_used() >= value_seen) {
                             cache_.append(value, value_seen);
-                        } else {
-                            // Cache is not alligned, we have to handle new value on bit level
-                            std::size_t unused_bits_in_cache = cache_.capacity() - cache_.bits_used();
-                            std::size_t new_bits_to_append =
-                                (unused_bits_in_cache > value_seen) ? value_seen : unused_bits_in_cache;
+                            processed_bits = value_seen;
+                        }
 
-                            cache_.append(value, new_bits_to_append);
+                        // Handle the case where the cache is not word-aligned or didn't have enough capacity in the aligned case
+                        while (processed_bits < value_seen) {
+                            std::size_t unused_bits_in_cache = cache_.capacity() - cache_.bits_used();
+                            std::size_t remaining_bits = value_seen - processed_bits;
+                            std::size_t bits_to_append = std::min(unused_bits_in_cache, remaining_bits);
+
+                            cache_.append(value, bits_to_append, processed_bits);
+                            processed_bits += bits_to_append;
 
                             if (cache_.is_full()) {
-                                dump_cache_to_construction();
-
-                                if (value_seen > new_bits_to_append) {
-                                    // Some bits left, add them into next block
-                                    cache_.append(value, value_seen - new_bits_to_append, new_bits_to_append);
-                                }
+                                flush_cache_to_construction();
                             }
                         }
+
                         total_seen_ += value_seen;
                     }
 
                 private:
-                    class block_cache {
-                        // I think, we should better move all optimizations around is_word_alligned() to the inject method
-                    public:
-                        inline void append(const word_type& word, const std::size_t inject_bits_n, const std::size_t word_offset = 0) {
-                            if (inject_bits_n > step_bits - filled_bits_n_) {
-                                return;
-                            }
-
-                            // if (is_word_alligned() && word_offset == 0) {
-                            //     storage_[filled_bits_n_ / word_bits] = word;
-                            //     filled_bits_n_ += inject_bits_n;
-                            // } else {
-                                injector_type::inject(word, inject_bits_n, storage_, filled_bits_n_, word_offset);
-                            // }
-                        }
-
-                        inline void append(const step_unit_type& block, const std::size_t inject_bits_n, const std::size_t block_offset = 0) {
-                            if (inject_bits_n > step_bits - filled_bits_n_) {
-                                return;
-                            }
-
-                            // if (is_empty() && block_offset == 0) {
-                            //     storage_ = block;
-                            //     filled_bits_n_ = inject_bits_n;
-                            // } else {
-                            //     if (is_word_alligned() && block_offset % word_bits == 0) {
-                            //         std::size_t block_offset_words = block_offset / word_bits;
-                            //         std::copy(
-                            //             block.begin() + block_offset_words,
-                            //             block.begin() + block_offset_words + inject_bits_n / word_bits + (inject_bits_n % word_bits ? 1 : 0),
-                            //             storage_.begin() + filled_bits_n_/word_bits
-                            //         );
-
-                            //         filled_bits_n_ += inject_bits_n;
-                            //     } else {
-                                    injector_type::inject(block, inject_bits_n, storage_, filled_bits_n_, block_offset);
-                                // }
-                            // }
-                        }
-
-                        inline const step_unit_type& get_block() const {
-                            return storage_;
-                        }
-
-                        inline void clean() {
-                            filled_bits_n_ = 0;
-                        }
-
-                        inline bool is_full() const {
-                            return filled_bits_n_ == step_bits;
-                        }
-
-                        inline bool is_empty() const {
-                            return filled_bits_n_ == 0;
-                        }
-
-                        inline std::size_t bits_used() const {
-                            return filled_bits_n_;
-                        }
-
-                        inline std::size_t capacity() const {
-                            return step_bits;
-                        }
-
-                        inline bool is_word_alligned() const {
-                            return filled_bits_n_ % word_bits == 0;
-                        }
-
-                    private:
-                        using injector_type = nil::crypto3::detail::injector<endian_type, endian_type, word_bits, step_words>;
-
-                        step_unit_type storage_ = step_unit_type();
-                        std::size_t filled_bits_n_ = 0;
-                    };
-
-                    // TODO: move this to hash_impl
-                    void dump_cache_to_construction() {
+                    void flush_cache_to_construction() {
+                        std::cout << "cache for construction: " << std::endl;
+                        print_hex_byteblob(std::cout, cache_.get_block().begin(), cache_.get_block().end());
                         if constexpr (nil::crypto3::hashes::is_sponge<hash_type>::value) {
-                            construction.absorb(cache_.get_block());
+                            construction.absorb(std::move(cache_.get_block()));
                         } else {
-                            construction.process_block(cache_.get_block());
+                            construction.process_block(std::move(cache_.get_block()));
                         }
                         cache_.clean();
                     }
 
                     std::size_t total_seen_ = 0;
-                    block_cache cache_;
+                    nil::crypto3::detail::block_cache<block_type, block_bits, word_type, word_bits, endian_type> cache_;
                     construction_type construction;
                 };
 

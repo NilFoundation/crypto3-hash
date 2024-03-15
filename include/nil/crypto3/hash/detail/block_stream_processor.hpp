@@ -54,14 +54,14 @@ namespace nil {
             template<typename Construction, typename StateAccumulator, typename Params>
             class block_stream_processor {
             protected:
-                typedef typename Construction::type construction_type; // TODO: get rid of construction, preocessor should be able to get block (step) type from acc
+                typedef typename Construction::type construction_type;
                 typedef StateAccumulator accumulator_type;
                 typedef Params params_type;
 
                 constexpr static const std::size_t word_bits = construction_type::word_bits;
 
-                constexpr static const std::size_t block_bits = construction_type::step_bits;
-                typedef typename construction_type::step_unit_type block_type;
+                constexpr static const std::size_t block_bits = construction_type::block_bits;
+                typedef typename construction_type::block_type block_type;
 
             public:
                 typedef typename params_type::digest_endian endian_type;
@@ -77,10 +77,6 @@ namespace nil {
 
                 inline void process_block(std::size_t block_seen = block_bits) {
                     using namespace nil::crypto3::detail;
-                    // TODO: move pack_to(...) to constructions, so we could use construction::absorb (for sponge-based)
-                    //   and construction::process_block (for MD-based) directly. For now it will mess the things up
-                    //   inside construction::digest(), since it calls process_block itself.
-
                     // Convert the input into words
                     block_type block;
                     pack_to<endian_type, value_bits, word_bits>(cache.begin(), cache.end(), block.begin());
