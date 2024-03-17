@@ -343,8 +343,8 @@ BOOST_AUTO_TEST_SUITE_END()
 BOOST_AUTO_TEST_SUITE(sha3_accumulator_test_suite)
 // Since our SHA3 implementation uses little_octet_big_bit, all the values are in this endianness
 BOOST_FIXTURE_TEST_CASE(sha3_224_accumulator1, fixture<224>) {
-    // bit string {1, 0, 0, 1, 1}
-    hash_t::construction::type::step_unit_type m = {{}};
+    // bit string {1, 1, 0, 0, 1}
+    hash_t::construction::type::block_type m = {{}};
     m[0] = UINT64_C(0x0000000000000013);
     acc(m, accumulators::bits = 5);
 
@@ -359,7 +359,7 @@ BOOST_FIXTURE_TEST_CASE(sha3_224_accumulator1, fixture<224>) {
 
 BOOST_FIXTURE_TEST_CASE(sha3_224_accumulator2, fixture<224>) {
     // bit string {1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0, 0, 1, 1, 0}
-    hash_t::construction::type::step_unit_type m = {{}};
+    hash_t::construction::type::block_type m = {{}};
     m[0] = UINT64_C(0x00000000197B5853);
     acc(m, accumulators::bits = 30);
 
@@ -374,7 +374,7 @@ BOOST_FIXTURE_TEST_CASE(sha3_224_accumulator2, fixture<224>) {
 
 BOOST_FIXTURE_TEST_CASE(sha3_224_accumulator3, fixture<224>) {
     // echo -n "abc" | sha3sum
-    hash_t::construction::type::step_unit_type m = {{}};
+    hash_t::construction::type::block_type m = {{}};
 
     m[0] = UINT64_C(0x0000000000636261);
     acc(m, accumulators::bits = 24);
@@ -390,14 +390,14 @@ BOOST_FIXTURE_TEST_CASE(sha3_224_accumulator3, fixture<224>) {
 
 BOOST_FIXTURE_TEST_CASE(sha3_224_accumulator4, fixture<224>) {
     // https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Standards-and-Guidelines/documents/examples/SHA3-224_1600.pdf
-    hash_t::construction::type::step_unit_type m1 = {
+    hash_t::construction::type::block_type m1 = {
         {UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a3a3),
          UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a3a3),
          UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a3a3),
          UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a3a3),
          UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a3a3),
          UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3000102094000b8), UINT64_C(0x67283609c1251003)}};
-    hash_t::construction::type::step_unit_type m1_state_endian;
+    hash_t::construction::type::block_type m1_state_endian;
     nil::crypto3::detail::pack<stream_endian::big_octet_big_bit, stream_endian::little_octet_big_bit, 64, 64>(m1.begin(), m1.end(), m1_state_endian.begin());
 
     acc(m1_state_endian, accumulators::bits = 16 * 64 + 8);
@@ -406,14 +406,14 @@ BOOST_FIXTURE_TEST_CASE(sha3_224_accumulator4, fixture<224>) {
 
     BOOST_CHECK_EQUAL("f434c78aa907e811d189dfe93223461f4fa0bcc28d5b445e70b24cc8", std::to_string(s).data());
 
-    hash_t::construction::type::step_unit_type m2 = {
+    hash_t::construction::type::block_type m2 = {
         {UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a3a3),
          UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a3a3),
          UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a300),
          UINT64_C(0x6a6b6c6d6e6f7071), UINT64_C(0x6b6c6d6e6f707172), UINT64_C(0x6c6d6e6f70717273),
          UINT64_C(0x6d6e6f7071727374), UINT64_C(0x6e6f707172737475), UINT64_C(0x0000000000000000),
          UINT64_C(0x0000000000000000), UINT64_C(0xc5000102094000b8), UINT64_C(0x67283609c1251003)}};
-    hash_t::construction::type::step_unit_type m2_state_endian;
+    hash_t::construction::type::block_type m2_state_endian;
     nil::crypto3::detail::pack<stream_endian::big_octet_big_bit, stream_endian::little_octet_big_bit, 64, 64>(m2.begin(), m2.end(), m2_state_endian.begin());
 
     acc(m2_state_endian, accumulators::bits = 9 * 64 - 8);
@@ -429,7 +429,7 @@ BOOST_FIXTURE_TEST_CASE(sha3_224_accumulator4, fixture<224>) {
 
 BOOST_FIXTURE_TEST_CASE(sha3_256_accumulator1, fixture<256>) {
     // bit string {1, 1, 0, 0, 1}
-    hash_t::construction::type::step_unit_type m = {{}};
+    hash_t::construction::type::block_type m = {{}};
     m[0] = UINT64_C(0x0000000000000013);
     acc(m, accumulators::bits = 5);
 
@@ -444,7 +444,7 @@ BOOST_FIXTURE_TEST_CASE(sha3_256_accumulator1, fixture<256>) {
 
 BOOST_FIXTURE_TEST_CASE(sha3_256_accumulator2, fixture<256>) {
     // echo -n "abc" | sha3sum -a 256
-    hash_t::construction::type::step_unit_type m = {{}};
+    hash_t::construction::type::block_type m = {{}};
 
     m[0] = UINT64_C(0x0000000000636261);
     acc(m, accumulators::bits = 24);
@@ -460,14 +460,14 @@ BOOST_FIXTURE_TEST_CASE(sha3_256_accumulator2, fixture<256>) {
 
 BOOST_FIXTURE_TEST_CASE(sha3_256_accumulator3, fixture<256>) {
     // https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Standards-and-Guidelines/documents/examples/SHA3-256_1600.pdf
-    hash_t::construction::type::step_unit_type m1 = {
+    hash_t::construction::type::block_type m1 = {
         {UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a3a3),
          UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a3a3),
          UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a3a3),
          UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a3a3),
          UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a3a3),
          UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3000102094000b8)}};
-    hash_t::construction::type::step_unit_type m1_state_endian;
+    hash_t::construction::type::block_type m1_state_endian;
     nil::crypto3::detail::pack<stream_endian::big_octet_big_bit, stream_endian::little_octet_big_bit, 64, 64>(m1.begin(), m1.end(), m1_state_endian.begin());
 
     acc(m1_state_endian, accumulators::bits = 16 * 64 + 8);
@@ -476,14 +476,14 @@ BOOST_FIXTURE_TEST_CASE(sha3_256_accumulator3, fixture<256>) {
 
     BOOST_CHECK_EQUAL("7e23024b73e352998831831553db3c2867858bb4889d53a3be1af099dd79c0e1", std::to_string(s).data());
 
-    hash_t::construction::type::step_unit_type m2 = {
+    hash_t::construction::type::block_type m2 = {
         {UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a3a3),
          UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a3a3),
          UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a300),
          UINT64_C(0x6a6b6c6d6e6f7071), UINT64_C(0x6b6c6d6e6f707172), UINT64_C(0x6c6d6e6f70717273),
          UINT64_C(0x6d6e6f7071727374), UINT64_C(0x6e6f707172737475), UINT64_C(0x0000000000000000),
          UINT64_C(0x0000000000000000), UINT64_C(0xc5000102094000b8)}};
-    hash_t::construction::type::step_unit_type m2_state_endian;
+    hash_t::construction::type::block_type m2_state_endian;
     nil::crypto3::detail::pack<stream_endian::big_octet_big_bit, stream_endian::little_octet_big_bit, 64, 64>(m2.begin(), m2.end(), m2_state_endian.begin());
 
     acc(m2_state_endian, accumulators::bits = 9 * 64 - 8);
@@ -499,7 +499,7 @@ BOOST_FIXTURE_TEST_CASE(sha3_256_accumulator3, fixture<256>) {
 
 BOOST_FIXTURE_TEST_CASE(sha3_384_accumulator1, fixture<384>) {
     // bit string {1, 1, 0, 0, 1}
-    hash_t::construction::type::step_unit_type m = {{}};
+    hash_t::construction::type::block_type m = {{}};
     m[0] = UINT64_C(0x0000000000000013);
     acc(m, accumulators::bits = 5);
 
@@ -517,7 +517,7 @@ BOOST_FIXTURE_TEST_CASE(sha3_384_accumulator1, fixture<384>) {
 
 BOOST_FIXTURE_TEST_CASE(sha3_384_accumulator2, fixture<384>) {
     // echo -n "abc" | sha3sum -a 384
-    hash_t::construction::type::step_unit_type m = {{}};
+    hash_t::construction::type::block_type m = {{}};
 
     m[0] = UINT64_C(0x0000000000636261);
     acc(m, accumulators::bits = 24);
@@ -536,13 +536,13 @@ BOOST_FIXTURE_TEST_CASE(sha3_384_accumulator2, fixture<384>) {
 
 BOOST_FIXTURE_TEST_CASE(sha3_384_accumulator3, fixture<384>) {
     // https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Standards-and-Guidelines/documents/examples/SHA3-384_1600.pdf
-    hash_t::construction::type::step_unit_type m1 = {
+    hash_t::construction::type::block_type m1 = {
         {UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a3a3),
          UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a3a3),
          UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a3a3),
          UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a3a3),
          UINT64_C(0xa3a3000102030405)}};
-    hash_t::construction::type::step_unit_type m1_state_endian;
+    hash_t::construction::type::block_type m1_state_endian;
     nil::crypto3::detail::pack<stream_endian::big_octet_big_bit, stream_endian::little_octet_big_bit, 64, 64>(m1.begin(), m1.end(), m1_state_endian.begin());
 
     acc(m1_state_endian, accumulators::bits = 12 * 64 + 16);
@@ -554,13 +554,13 @@ BOOST_FIXTURE_TEST_CASE(sha3_384_accumulator3, fixture<384>) {
         "3107b481933b6fe4be882e3822bd4578",
         std::to_string(s).data());
 
-    hash_t::construction::type::step_unit_type m2 = {
+    hash_t::construction::type::block_type m2 = {
         {UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a3a3),
          UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a3a3),
          UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a3a3),
          UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a3a3),
          UINT64_C(0xa3a3a3a3a3a37374)}};
-    hash_t::construction::type::step_unit_type m2_state_endian;
+    hash_t::construction::type::block_type m2_state_endian;
     nil::crypto3::detail::pack<stream_endian::big_octet_big_bit, stream_endian::little_octet_big_bit, 64, 64>(m2.begin(), m2.end(), m2_state_endian.begin());
 
     acc(m2_state_endian, accumulators::bits = 12 * 64 + 48);
@@ -579,7 +579,7 @@ BOOST_FIXTURE_TEST_CASE(sha3_384_accumulator3, fixture<384>) {
 
 BOOST_FIXTURE_TEST_CASE(sha3_512_accumulator1, fixture<512>) {
     // bit string {1, 1, 0, 0, 1}
-    hash_t::construction::type::step_unit_type m = {{}};
+    hash_t::construction::type::block_type m = {{}};
     m[0] = UINT64_C(0x0000000000000013);
     acc(m, accumulators::bits = 5);
 
@@ -597,7 +597,7 @@ BOOST_FIXTURE_TEST_CASE(sha3_512_accumulator1, fixture<512>) {
 
 BOOST_FIXTURE_TEST_CASE(sha3_512_accumulator2, fixture<512>) {
     // echo -n "abc" | sha3sum -a 512
-    hash_t::construction::type::step_unit_type m = {{}};
+    hash_t::construction::type::block_type m = {{}};
 
     m[0] = UINT64_C(0x0000000000636261);
     acc(m, accumulators::bits = 24);
@@ -616,11 +616,11 @@ BOOST_FIXTURE_TEST_CASE(sha3_512_accumulator2, fixture<512>) {
 
 BOOST_FIXTURE_TEST_CASE(sha3_512_accumulator3, fixture<512>) {
     // https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Standards-and-Guidelines/documents/examples/SHA3-512_1600.pdf
-    hash_t::construction::type::step_unit_type m1 = {
+    hash_t::construction::type::block_type m1 = {
         {UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a3a3),
          UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a3a3),
          UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a3a3)}};
-    hash_t::construction::type::step_unit_type m1_state_endian;
+    hash_t::construction::type::block_type m1_state_endian;
     nil::crypto3::detail::pack<stream_endian::big_octet_big_bit, stream_endian::little_octet_big_bit, 64, 64>(m1.begin(), m1.end(), m1_state_endian.begin());
 
     acc(m1_state_endian, accumulators::bits = 9 * 64);
@@ -633,11 +633,11 @@ BOOST_FIXTURE_TEST_CASE(sha3_512_accumulator3, fixture<512>) {
         "94d343b3971bc0c9ba30e0dde18106cbaaa955c8c3c0bf1ec3490aafcae15788",
         std::to_string(s).data());
 
-    hash_t::construction::type::step_unit_type m2 = {
+    hash_t::construction::type::block_type m2 = {
         {UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a3a3),
          UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a3a3),
          UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a3ff)}};
-    hash_t::construction::type::step_unit_type m2_state_endian;
+    hash_t::construction::type::block_type m2_state_endian;
     nil::crypto3::detail::pack<stream_endian::big_octet_big_bit, stream_endian::little_octet_big_bit, 64, 64>(m2.begin(), m2.end(), m2_state_endian.begin());
 
     acc(m2_state_endian, accumulators::bits = 8 * 64 + 56);
@@ -649,11 +649,11 @@ BOOST_FIXTURE_TEST_CASE(sha3_512_accumulator3, fixture<512>) {
         "8a9349de9c34c870206e76cc6aab80365139828ca190d351fc70b83bf893076a",
         std::to_string(s).data());
 
-    hash_t::construction::type::step_unit_type m3 = {
+    hash_t::construction::type::block_type m3 = {
         {UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a3a3),
          UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a3a3),
          UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa300901278231349), UINT64_C(0x5867344857584354)}};
-    hash_t::construction::type::step_unit_type m3_state_endian;
+    hash_t::construction::type::block_type m3_state_endian;
     nil::crypto3::detail::pack<stream_endian::big_octet_big_bit, stream_endian::little_octet_big_bit, 64, 64>(m3.begin(), m3.end(), m3_state_endian.begin());
 
     acc(m3_state_endian, accumulators::bits = 7 * 64 + 8);
@@ -671,11 +671,11 @@ BOOST_FIXTURE_TEST_CASE(sha3_512_accumulator3, fixture<512>) {
 }
 
 BOOST_FIXTURE_TEST_CASE(sha3_512_accumulator4, fixture<512>) {
-    hash_t::construction::type::step_unit_type m1 = {
+    hash_t::construction::type::block_type m1 = {
         {UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a3a3),
          UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a3a3),
          UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a3a3), UINT64_C(0xa3a3a3a3a3a3a323)}};
-    hash_t::construction::type::step_unit_type m1_state_endian;
+    hash_t::construction::type::block_type m1_state_endian;
     nil::crypto3::detail::pack<stream_endian::big_octet_big_bit, stream_endian::little_octet_big_bit, 64, 64>(m1.begin(), m1.end(), m1_state_endian.begin());
 
     acc(m1_state_endian, accumulators::bits = 9 * 64 - 1); // Not enough space left for padding

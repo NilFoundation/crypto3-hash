@@ -69,7 +69,6 @@ namespace nil {
 
                         constexpr static const std::size_t length_bits = policy_type::length_bits;
                         constexpr static const std::size_t digest_bits = policy_type::digest_bits;
-                        // error about no word_type here
                     };
 
                     typedef sponge_construction<params_type, policy_type, typename policy_type::iv_generator,

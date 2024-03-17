@@ -65,14 +65,10 @@ namespace nil {
                 constexpr static const std::size_t state_words = Policy::state_words;
                 using state_type = typename Policy::state_type;
 
-                // R (bitrate). aka block to fit other code
+                // R (bitrate). `block` is used to fit other code (e.g. accumulator)
                 constexpr static const std::size_t block_bits = Policy::block_bits;
                 constexpr static const std::size_t block_words = Policy::block_words;
                 using block_type = typename Policy::block_type;
-
-                constexpr static const std::size_t step_bits = Policy::block_bits;
-                constexpr static const std::size_t step_words = Policy::block_words;
-                using step_unit_type = typename Policy::block_type;
 
                 constexpr static const std::size_t digest_bits = Params::digest_bits;
                 constexpr static const std::size_t digest_bytes = digest_bits / octet_bits;

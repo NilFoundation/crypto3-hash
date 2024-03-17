@@ -311,6 +311,7 @@ BOOST_FIXTURE_TEST_CASE(sha2_256_accumulator2, fixture<256>) {
 }
 
 BOOST_FIXTURE_TEST_CASE(sha2_256_accumulator3, fixture<256>) {
+    // Example from Appendix B.2, shortened, then extended
     hash_t::construction::type::block_type m1 = {
         {0x61626364, 0x62636465, 0x63646566, 0x64656667, 0x65666768, 0x66676869, 0x6768696a, 0x68696a6b, 0x696a6b6c,
          0x6a6b6c6d, 0x6b6c6d6e, 0x6c6d6e6f, 0x61'010101, 0x01010101, 0x80000000, 0x00000000}}; // After ' symbol values are unused
@@ -318,6 +319,7 @@ BOOST_FIXTURE_TEST_CASE(sha2_256_accumulator3, fixture<256>) {
 
     hash_t::digest_type s = extract::hash<hash_t>(acc);
 
+    // echo -n "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnoa" | sha256sum
     BOOST_CHECK_EQUAL("1afbf54773a9a85be9ba0b691b6b21560772969e1bec2dd3cd77a56f39ba61bf", std::to_string(s).data());
 
     // We want to append the next data to state. Output should be the same as if we appended it after ' symbol in m1
@@ -342,7 +344,7 @@ BOOST_FIXTURE_TEST_CASE(sha2_256_accumulator4, fixture<256>) {
     // The same as previous one, but blocks are splitted in other way
     hash_t::construction::type::block_type m1 = {
         {0x61626364, 0x62636465, 0x63646566, 0x64656667, 0x65666768, 0x66676869, 0x6768696a, 0x68696a6b, 0x696a6b6c,
-         0x6a6b6c6d, 0x6b6c6d6e, 0x6c6d6e6f, 0x61'6d6e6f, 0x706e6f70, 0x716d6e6f, 0x706e6f70}}; // After ' symbol values are unused
+         0x6a6b6c6d, 0x6b6c6d6e, 0x6c6d6e6f, 0x616d6e6f, 0x706e6f70, 0x716d6e6f, 0x706e6f70}};
     acc(m1, accumulators::bits = 512);
 
     m1 = {{ 0x716d6e6f, 0x706e6f70, 0x71'000000 }};
@@ -539,41 +541,40 @@ BOOST_AUTO_TEST_CASE(sha256_preprocessor5) {
     BOOST_CHECK_EQUAL("7d3e74a05d7db15bce4ad9ec0658ea98e3f06eeecf16b4c6fff2da457ddc2f34", std::to_string(s).data());
 }
 
-// FIXME: These tests show we have incorrect SHA256 for some of the inputs
-// BOOST_AUTO_TEST_CASE(sha256_preprocessor6) {
+BOOST_AUTO_TEST_CASE(sha256_preprocessor6) {
 
-//     // Example from Appendix B.3, shortened
-//     accumulator_set<hashes::sha2<256>> acc;
+    // Example from Appendix B.3, shortened
+    accumulator_set<hashes::sha2<256>> acc;
 
-//     hashes::sha2<256>::construction::type::block_type m1 = {
-//         {0x61616161, 0x61616161, 0x61616161, 0x61616161, 0x61616161, 0x61616161, 0x61616161, 0x61616161, 0x61616161,
-//          0x61616161, 0x61616161, 0x61616161, 0x61616161, 0x61616161, 0x61616161, 0x61616161}};
+    hashes::sha2<256>::construction::type::block_type m1 = {
+        {0x61616161, 0x61616161, 0x61616161, 0x61616161, 0x61616161, 0x61616161, 0x61616161, 0x61616161, 0x61616161,
+         0x61616161, 0x61616161, 0x61616161, 0x61616161, 0x61616161, 0x61616161, 0x61616161}};
 
-//     acc(m1, accumulators::bits = 64 * 8); // Exactly 2 blocks
-//     hashes::sha2<256>::digest_type s = extract::hash<hashes::sha2<256>>(acc);
+    acc(m1, accumulators::bits = 64 * 8);
+    hashes::sha2<256>::digest_type s = extract::hash<hashes::sha2<256>>(acc);
 
-// #ifdef CRYPTO3_HASH_SHOW_PROGRESS
-//     std::printf("%s\n", std::to_string(s).data());
-// #endif
+#ifdef CRYPTO3_HASH_SHOW_PROGRESS
+    std::printf("%s\n", std::to_string(s).data());
+#endif
 
-//     BOOST_CHECK_EQUAL("ffe054fe7ae0cb6dc65c3af9b61d5209f439851db43d0ba5997337df154668eb", std::to_string(s).data());
-// }
+    BOOST_CHECK_EQUAL("ffe054fe7ae0cb6dc65c3af9b61d5209f439851db43d0ba5997337df154668eb", std::to_string(s).data());
+}
 
-// BOOST_AUTO_TEST_CASE(sha256_preprocessor7) {
+BOOST_AUTO_TEST_CASE(sha256_preprocessor7) {
 
-//     // Example from Appendix B.3
-//     accumulator_set<hashes::sha2<256>> acc;
-//     for (unsigned i = 0; i < 1000000; ++i) {
-//         acc(0x61000000, accumulators::bits = 8);
-//     }
-//     hashes::sha2<256>::digest_type s = extract::hash<hashes::sha2<256>>(acc);
+    // Example from Appendix B.3
+    accumulator_set<hashes::sha2<256>> acc;
+    for (unsigned i = 0; i < 1000000; ++i) {
+        acc(0x61000000, accumulators::bits = 8);
+    }
+    hashes::sha2<256>::digest_type s = extract::hash<hashes::sha2<256>>(acc);
 
-// #ifdef CRYPTO3_HASH_SHOW_PROGRESS
-//     std::printf("%s\n", std::to_string(s).data());
-// #endif
+#ifdef CRYPTO3_HASH_SHOW_PROGRESS
+    std::printf("%s\n", std::to_string(s).data());
+#endif
 
-//     BOOST_CHECK_EQUAL("cdc76e5c9914fb9281a1c7e284d73e67f1809a48a497200e046d39ccc7112cd0", std::to_string(s).data());
-// }
+    BOOST_CHECK_EQUAL("cdc76e5c9914fb9281a1c7e284d73e67f1809a48a497200e046d39ccc7112cd0", std::to_string(s).data());
+}
 
 BOOST_AUTO_TEST_CASE(sha384_preprocessor1) {
     accumulator_set<hashes::sha2<384>> acc;
