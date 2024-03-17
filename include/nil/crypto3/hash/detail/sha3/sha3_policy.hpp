@@ -150,21 +150,7 @@ namespace nil {
 
                     struct iv_generator {
                         static state_type generate() {
-                            // 1600 zeros. Mb use keccak one
-                            static state_type const H0 = {UINT64_C(0x0000000000000000), UINT64_C(0x0000000000000000),
-                                                          UINT64_C(0x0000000000000000), UINT64_C(0x0000000000000000),
-                                                          UINT64_C(0x0000000000000000), UINT64_C(0x0000000000000000),
-                                                          UINT64_C(0x0000000000000000), UINT64_C(0x0000000000000000),
-                                                          UINT64_C(0x0000000000000000), UINT64_C(0x0000000000000000),
-                                                          UINT64_C(0x0000000000000000), UINT64_C(0x0000000000000000),
-                                                          UINT64_C(0x0000000000000000), UINT64_C(0x0000000000000000),
-                                                          UINT64_C(0x0000000000000000), UINT64_C(0x0000000000000000),
-                                                          UINT64_C(0x0000000000000000), UINT64_C(0x0000000000000000),
-                                                          UINT64_C(0x0000000000000000), UINT64_C(0x0000000000000000),
-                                                          UINT64_C(0x0000000000000000), UINT64_C(0x0000000000000000),
-                                                          UINT64_C(0x0000000000000000), UINT64_C(0x0000000000000000),
-                                                          UINT64_C(0x0000000000000000)};
-                            return H0;
+                            return keccak_1600_policy<DigestBits>::iv_generator::generate();
                         }
                     };
                 };

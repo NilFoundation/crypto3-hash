@@ -50,13 +50,14 @@
 
 #include <nil/crypto3/hash/type_traits.hpp>
 
-
+#include <iomanip>
 namespace nil {
     namespace crypto3 {
         namespace hashes {
             template<typename Params, typename BasePointGeneratorHash, typename Group>
             struct pedersen;
         }
+
 template<typename TIter>
 void print_hex_byteblob(std::ostream &os, TIter iter_begin, TIter iter_end, bool endl = true) {
     os << std::hex;

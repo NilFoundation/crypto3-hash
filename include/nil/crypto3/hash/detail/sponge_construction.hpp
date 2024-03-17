@@ -49,9 +49,10 @@ namespace nil {
             template<typename Params,
                      typename Policy,
                      typename IVGenerator, // Class produsing IV
-                     typename Absorber,          // Must provide void absorb(block, state)
-                     typename Permutator,        // Must provide void permute(state)
-                     typename Padder>            // Must provide std::vector<block_type> get_padded_blocks(block)
+                     typename Absorber,    // Must provide void absorb(block, state)
+                     typename Permutator,  // Must provide void permute(state)
+                     typename Padder       // Must provide std::vector<block_type> get_padded_blocks(block)
+                     >
             class sponge_construction {
             public:
                 using endian_type = typename Params::digest_endian;

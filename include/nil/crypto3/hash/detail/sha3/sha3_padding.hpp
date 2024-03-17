@@ -27,6 +27,7 @@
 
 #include <nil/crypto3/detail/inject.hpp>
 #include <nil/crypto3/detail/unbounded_shift.hpp>
+#include <nil/crypto3/hash/detail/keccak/keccak_padding.hpp>
 #include <nil/crypto3/hash/detail/sha3/sha3_policy.hpp>
 
 
@@ -56,39 +57,34 @@ namespace nil {
 
                 public:
                     static std::vector<block_type> get_padded_blocks(const block_type& block, std::size_t block_seen) {
-                        // SHA3 padding consists of 01 10 0...0 1 (domain separation byte + 10*1 padding)
+                        // SHA3 padding consists of 01 10 0...0 1 (domain separation byte + 10*1 keccak padding)
                         using namespace nil::crypto3::detail;
 
                         std::vector<block_type> padded_blocks;
                         block_type new_block = block;
                         // set variable to 0110
-                        word_type padding_start = unbounded_shr(high_bits<word_bits>(~word_type(), 2), 1);
+                        word_type domain_byte = unbounded_shr(high_bits<word_bits>(~word_type(), 2), 1);
                         // get how many bits from it could fit into current block
-                        const std::size_t padding_start_bits_for_first_block = std::min(block_bits - block_seen, std::size_t{4});
+                        const std::size_t domain_byte_bits_for_first_block = std::min(block_bits - block_seen, std::size_t{4});
                         // inject this amount of bits
-                        injector_type::inject(padding_start, padding_start_bits_for_first_block, new_block, block_seen);
+                        injector_type::inject(domain_byte, domain_byte_bits_for_first_block, new_block, block_seen);
 
                         if (block_seen == block_bits) {
                             // if current block is full, copy it to result vector, reset counter. Since we need
-                            // to add, at least, the last 1 bit (and mb the rest of padding_start)
+                            // to add, at least, the last 1 bit (and mb the rest of domain_byte)
                             padded_blocks.push_back(new_block);
                             block_seen = 0;
                         }
 
-                        if (padding_start_bits_for_first_block < 4) {
-                            // if not all padding_start was injected, we inject the rest of the padding_start to the next block
-                            injector_type::inject(padding_start, 4 - padding_start_bits_for_first_block, new_block,
-                                                    block_seen, padding_start_bits_for_first_block);
+                        if (domain_byte_bits_for_first_block < 2) {
+                            // if not all domain_byte was injected, we inject the rest of the domain_byte to the next block
+                            injector_type::inject(domain_byte, 2 - domain_byte_bits_for_first_block, new_block,
+                                                    block_seen, domain_byte_bits_for_first_block);
                         }
 
-                        // fill the rest of the block with zeros
-                        block_type zeros;
-                        std::fill(zeros.begin(), zeros.end(), 0);
-                        injector_type::inject(zeros, block_bits - 1 - block_seen, new_block, block_seen);
+                        auto keccak_padding_result = keccak_1600_padder<Policy>::get_padded_blocks(new_block, block_seen);
 
-                        // add the last 1
-                        injector_type::inject(high_bits<word_bits>(~word_type(), 1), 1, new_block,
-                                                block_seen);
+                        padded_blocks.insert(padded_blocks.end(), std::make_move_iterator(keccak_padding_result.begin()), std::make_move_iterator(keccak_padding_result.end()));
 
                         padded_blocks.push_back(new_block);
 
