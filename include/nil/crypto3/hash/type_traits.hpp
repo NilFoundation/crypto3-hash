@@ -105,6 +105,9 @@ namespace nil {
             template<typename PolicyType>
             struct poseidon;
 
+            template<typename Params, typename Policy, typename VectorInitializer, typename Absorber, typename Permutator, typename Padder>
+            class sponge_construction;
+
             template<typename Params, typename Hash, typename Group>
             struct find_group_hash;
 
@@ -159,6 +162,23 @@ namespace nil {
             template<typename HashType>
             struct is_poseidon<HashType, typename std::enable_if_t<std::is_same<nil::crypto3::hashes::poseidon<typename HashType::policy_type>, HashType>::value>> {
             public:
+                static const bool value = true;
+                typedef HashType type;
+            };
+
+            template <template <typename...> class PrimaryTemplate, typename T>
+            struct is_specialization_of : std::false_type {};
+
+            template <template <typename...> class PrimaryTemplate, typename... Args>
+            struct is_specialization_of<PrimaryTemplate, PrimaryTemplate<Args...>> : std::true_type {};
+
+            template<typename HashType, typename Enable = void>
+            struct is_sponge {
+                static const bool value = false;
+            };
+
+            template<typename HashType>
+            struct is_sponge<HashType, std::enable_if_t<is_specialization_of<sponge_construction, typename HashType::construction::type>::value>> {
                 static const bool value = true;
                 typedef HashType type;
             };
