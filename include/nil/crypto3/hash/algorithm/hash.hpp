@@ -43,8 +43,8 @@ namespace nil {
 
 #ifdef __ZKLLVM__
         template <class HashType>
-        typename HashType::block_type hash(typename HashType::block_type block0, typename HashType::block_type block1){
-           return typename HashType::process()(block0, block1);
+        inline typename HashType::block_type hash(typename HashType::block_type block0, typename HashType::block_type block1){
+            return HashType::process(block0, block1);
         }
 #else
         /*!
@@ -168,7 +168,7 @@ namespace nil {
 
             return HashImpl(first, last, HashAccumulator());
         }
-        
+
         // For posseidon.
         template<typename Hash, typename InputIterator,
             std::enable_if_t<crypto3::hashes::is_poseidon<Hash>::value &&
@@ -181,7 +181,7 @@ namespace nil {
                 sponge.absorb(*first++);
             }
             return sponge.squeeze();
- 
+
         }
 
         /*!
@@ -250,7 +250,7 @@ namespace nil {
          *
          * @return
          */
-        template<typename Hash, typename SinglePassRange, typename HashAccumulator = accumulator_set<Hash>, 
+        template<typename Hash, typename SinglePassRange, typename HashAccumulator = accumulator_set<Hash>,
             std::enable_if_t<!crypto3::hashes::is_poseidon<Hash>::value, bool> = true>
         hashes::detail::range_hash_impl<hashes::detail::value_hash_impl<HashAccumulator>>
             hash(const SinglePassRange &r) {
@@ -261,7 +261,7 @@ namespace nil {
             return HashImpl(r, HashAccumulator());
         }
 
-        // TODO: Use packing in the block_stream_processor in the future, now it will work well with 256 bit 
+        // TODO: Use packing in the block_stream_processor in the future, now it will work well with 256 bit
         // field elements which are used in posseidon. Also try to use concepts, not fix the posseidon class type.
 
         // This function is used for merkle tree, where multiple group elements are hashed together to create the parent element.
@@ -295,8 +295,8 @@ namespace nil {
         }
 
         // This function is used for merkle tree to initially hash the original elements in the tree leaves.
-        template<typename Hash, typename GroupElement, 
-            std::enable_if_t<crypto3::hashes::is_poseidon<Hash>::value && 
+        template<typename Hash, typename GroupElement,
+            std::enable_if_t<crypto3::hashes::is_poseidon<Hash>::value &&
                              std::is_same<typename Hash::digest_type, GroupElement>::value, bool> = true>
         typename Hash::digest_type hash(const GroupElement &element, const typename Hash::digest_type& initial_element) {
 
@@ -308,8 +308,8 @@ namespace nil {
             return sponge.squeeze();
         }
 
-        template<typename Hash, typename GroupElement, 
-            std::enable_if_t<crypto3::hashes::is_poseidon<Hash>::value && 
+        template<typename Hash, typename GroupElement,
+            std::enable_if_t<crypto3::hashes::is_poseidon<Hash>::value &&
                              std::is_same<typename Hash::digest_type, GroupElement>::value, bool> = true>
         typename Hash::digest_type hash(const GroupElement &element) {
 
@@ -320,22 +320,22 @@ namespace nil {
             return sponge.squeeze();
         }
 
-        // This function is used for hashing containers of integral values using Posseidon hash. 
-        // Usually this will pack a vector of 8-bit integers into a 255 bit group element, which means the last 
-        // 7 bits will not be used in the current implementation. Also group element multiplications are pretty slow. 
+        // This function is used for hashing containers of integral values using Posseidon hash.
+        // Usually this will pack a vector of 8-bit integers into a 255 bit group element, which means the last
+        // 7 bits will not be used in the current implementation. Also group element multiplications are pretty slow.
         template<typename Hash, typename IntegralContainer,
             std::enable_if_t<crypto3::hashes::is_poseidon<Hash>::value &&
                              std::is_integral<typename IntegralContainer::value_type>::value, bool> = true>
-        typename Hash::digest_type absorb(hashes::detail::poseidon_sponge_construction<typename Hash::policy_type>& sponge, 
+        typename Hash::digest_type absorb(hashes::detail::poseidon_sponge_construction<typename Hash::policy_type>& sponge,
                                           const IntegralContainer &r) {
             typename Hash::digest_type next_element = Hash::digest_type::zero();
             std::size_t bits_left = Hash::word_bits;
-            
+
             std::size_t input_word_size = CHAR_BIT * sizeof(typename IntegralContainer::value_type);
 
             // At least 1 input word must fit in a single group element.
             // Normally group element is 255 or 256 bits, while input word size is 8 or 32 or 64 bits.
-            assert(input_word_size <= Hash::word_bits); 
+            assert(input_word_size <= Hash::word_bits);
 
             for (const auto& word: r) {
                 if (bits_left < input_word_size) {
@@ -343,7 +343,7 @@ namespace nil {
                     next_element = Hash::digest_type::zero();
                     bits_left = Hash::word_bits;
                 }
-                next_element *= 1 << input_word_size; 
+                next_element *= 1 << input_word_size;
                 next_element += word;
                 bits_left -= input_word_size;
             }
@@ -355,8 +355,8 @@ namespace nil {
             return sponge.squeeze();
         }
 
-        template<typename Hash, typename IntegralContainer, 
-            std::enable_if_t<crypto3::hashes::is_poseidon<Hash>::value && 
+        template<typename Hash, typename IntegralContainer,
+            std::enable_if_t<crypto3::hashes::is_poseidon<Hash>::value &&
                              std::is_integral<typename IntegralContainer::value_type>::value, bool> = true>
         typename Hash::digest_type hash(const IntegralContainer &r, const typename Hash::digest_type& initial_element) {
             hashes::detail::poseidon_sponge_construction<typename Hash::policy_type> sponge;
@@ -365,8 +365,8 @@ namespace nil {
             return absorb<Hash>(sponge, r);
         }
 
-        template<typename Hash, typename IntegralContainer, 
-            std::enable_if_t<crypto3::hashes::is_poseidon<Hash>::value && 
+        template<typename Hash, typename IntegralContainer,
+            std::enable_if_t<crypto3::hashes::is_poseidon<Hash>::value &&
                              std::is_integral<typename IntegralContainer::value_type>::value, bool> = true>
         typename Hash::digest_type hash(const IntegralContainer &r) {
             hashes::detail::poseidon_sponge_construction<typename Hash::policy_type> sponge;
