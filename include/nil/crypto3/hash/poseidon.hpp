@@ -27,10 +27,8 @@ namespace nil {
             public:
                 typedef typename algebra::curves::pallas::base_field_type::value_type block_type;
 
-                struct process{
-                    block_type operator()(block_type first_input_block, block_type second_input_block){
-                        return __builtin_assigner_poseidon_pallas_base({0, first_input_block, second_input_block})[2];
-                    }
+                static inline block_type process(block_type first_input_block, block_type second_input_block) {
+                    return __builtin_assigner_poseidon_pallas_base(first_input_block, second_input_block);
                 };
             };
 #else
